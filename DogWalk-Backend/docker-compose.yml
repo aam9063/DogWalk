@@ -1,0 +1,33 @@
+services:
+  web-api:
+    image: ${DOCKER_REGISTRY-}webapi
+    container_name: web-api
+    build:
+      context: .
+      dockerfile: DogWalk-API/Dockerfile
+    ports:
+      - 5208:8080
+      - 5209:8081
+    depends_on:
+      - sqlserver
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=DogWalk;User Id=sa;Password=2ZE868Fru;TrustServerCertificate=True
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=2ZE868Fru
+      - MSSQL_PID=Express
+    volumes:
+      - ./.containers/sqlserver:/var/opt/mssql/data
+    ports:
+      - 1433:1433
+    command: >
+      bash -c "
+        /opt/mssql/bin/sqlservr &
+        sleep 30s &&
+        /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 2ZE868Fru -i /scripts/init.sql &&
+        wait
+      "

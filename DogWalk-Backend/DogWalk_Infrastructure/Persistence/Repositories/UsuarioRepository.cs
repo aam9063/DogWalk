@@ -65,22 +65,11 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
         public async Task<Guid> CreateAdminUserAsync(string email, string nombre, string apellido,
                                                   string telefono, string password)
         {
-            // Hashear la contraseña
-            byte[] passwordSalt = new byte[128 / 8];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(passwordSalt);
-            }
-            
-            // Crear el hash usando el salt
-            byte[] passwordHash = GeneratePasswordHash(password, passwordSalt);
+            // Crear el objeto Password usando la lógica de dominio
+            var passwordObj = DogWalk_Domain.Common.ValueObjects.Password.Create(password);
             
             var adminId = Guid.NewGuid();
             DateTime ahora = DateTime.UtcNow;
-            
-            // Asumiendo que el rol Admin tiene el ID 1 en tu tabla de roles
-            // Ajusta este valor según el ID real en tu base de datos
-            int rolAdminId = 1; 
             
             var sql = @"
                 INSERT INTO Usuarios (
@@ -97,10 +86,10 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 new Microsoft.Data.SqlClient.SqlParameter("@Nombre", nombre),
                 new Microsoft.Data.SqlClient.SqlParameter("@Apellido", apellido),
                 new Microsoft.Data.SqlClient.SqlParameter("@Email", email),
-                new Microsoft.Data.SqlClient.SqlParameter("@PasswordHash", passwordHash),
-                new Microsoft.Data.SqlClient.SqlParameter("@PasswordSalt", passwordSalt),
+                new Microsoft.Data.SqlClient.SqlParameter("@PasswordHash", passwordObj.Hash),
+                new Microsoft.Data.SqlClient.SqlParameter("@PasswordSalt", passwordObj.Salt),
                 new Microsoft.Data.SqlClient.SqlParameter("@Telefono", telefono),
-                new Microsoft.Data.SqlClient.SqlParameter("@Rol", rolAdminId),
+                new Microsoft.Data.SqlClient.SqlParameter("@Rol", (int)DogWalk_Domain.Common.Enums.RolUsuario.Administrador),
                 new Microsoft.Data.SqlClient.SqlParameter("@CreadoEn", ahora),
                 new Microsoft.Data.SqlClient.SqlParameter("@ModificadoEn", ahora)
             };
@@ -110,13 +99,28 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
             return adminId;
         }
 
-        // Método auxiliar para generar el hash de la contraseña
-        private byte[] GeneratePasswordHash(string password, byte[] salt)
+        public async Task UpdatePasswordAsync(Guid userId, string newPassword)
         {
-            using (var hmac = new System.Security.Cryptography.HMACSHA512(salt))
+            // Crear un nuevo objeto Password con el método del dominio
+            var passwordObj = DogWalk_Domain.Common.ValueObjects.Password.Create(newPassword);
+            
+            // Actualizar directamente en la base de datos
+            string sql = @"
+                UPDATE Usuarios
+                SET PasswordHash = @PasswordHash, 
+                    PasswordSalt = @PasswordSalt,
+                    ModificadoEn = @ModificadoEn
+                WHERE Id = @UserId";
+            
+            var parameters = new[]
             {
-                return hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-            }
+                new Microsoft.Data.SqlClient.SqlParameter("@PasswordHash", passwordObj.Hash),
+                new Microsoft.Data.SqlClient.SqlParameter("@PasswordSalt", passwordObj.Salt),
+                new Microsoft.Data.SqlClient.SqlParameter("@ModificadoEn", DateTime.UtcNow),
+                new Microsoft.Data.SqlClient.SqlParameter("@UserId", userId)
+            };
+            
+            await _dbContext.Database.ExecuteSqlRawAsync(sql, parameters);
         }
     }
 }

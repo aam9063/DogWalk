@@ -30,41 +30,34 @@ namespace DogWalk_API.Controllers
         {
             try
             {
+                // Obtener el usuario por email
                 var user = await _unitOfWork.Usuarios.GetByEmailAsync(loginDto.Email);
-
+                
                 if (user == null)
                 {
                     return Unauthorized(new { message = "Credenciales inválidas" });
                 }
-
+                
+                // Verificar la contraseña utilizando el método Verify
                 bool passwordValid = false;
-
-                // Intenta verificar con el método normal
-                try
+                try 
                 {
                     passwordValid = user.Password.Verify(loginDto.Password);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    passwordValid = false;
+                    Console.WriteLine($"Error al verificar contraseña: {ex.Message}");
+                    return Unauthorized(new { message = "Credenciales inválidas" });
                 }
-
-                // Si la contraseña es exactamente la que sabemos que debería funcionar
-                // pero por alguna razón Verify está fallando
-                if (!passwordValid && loginDto.Password == "2ZE868Fru")
-                {
-                    // Permitir acceso solo para esta contraseña específica
-                    // mientras solucionamos el problema de verificación
-                    passwordValid = true;
-                }
-
+                
                 if (!passwordValid)
                 {
                     return Unauthorized(new { message = "Credenciales inválidas" });
                 }
-
+                
+                // Generar token JWT
                 var token = GenerateJwtToken(user);
-
+                
                 return Ok(new AuthResponseDto
                 {
                     Success = true,
@@ -78,7 +71,8 @@ namespace DogWalk_API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error: {ex.Message}" });
+                Console.WriteLine($"Error en login: {ex.Message}");
+                return StatusCode(500, new { message = "Error interno del servidor" });
             }
         }
 
@@ -155,6 +149,41 @@ namespace DogWalk_API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Error en la verificación: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("admin/reset-password")]
+        [AllowAnonymous] // Temporal para poder reiniciar contraseñas sin autenticación
+        public async Task<IActionResult> AdminResetPassword([FromBody] ResetAdminPasswordDto resetDto)
+        {
+            try
+            {
+                // Verificar la clave de seguridad (puedes cambiarla por una constante más segura)
+                if (resetDto.SecurityKey != "ResetPasswordKey123")
+                {
+                    return Unauthorized(new { message = "Clave de seguridad incorrecta" });
+                }
+                
+                // Obtener el usuario por ID
+                var usuario = await _unitOfWork.Usuarios.GetByIdAsync(resetDto.UserId);
+                
+                if (usuario == null)
+                {
+                    return NotFound(new { message = "Usuario no encontrado" });
+                }
+                
+                // Actualizar la contraseña
+                await _unitOfWork.Usuarios.UpdatePasswordAsync(resetDto.UserId, resetDto.NewPassword);
+                
+                return Ok(new { 
+                    message = "Contraseña actualizada correctamente", 
+                    userId = usuario.Id,
+                    email = usuario.Email.ToString()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al reiniciar la contraseña: {ex.Message}" });
             }
         }
 

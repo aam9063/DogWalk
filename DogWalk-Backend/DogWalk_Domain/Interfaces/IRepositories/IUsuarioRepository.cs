@@ -17,4 +17,5 @@ public interface IUsuarioRepository : IRepository<Usuario>
                                       string telefono, string password);
         Task<Usuario> GetFirstOrDefaultAsync(Expression<Func<Usuario, bool>> predicate);
         Task<IEnumerable<Usuario>> GetAsync(Expression<Func<Usuario, bool>> predicate);
+        Task UpdatePasswordAsync(Guid userId, string newPassword);
     }

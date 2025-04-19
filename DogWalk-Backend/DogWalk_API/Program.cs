@@ -13,6 +13,7 @@ using DogWalk_Infrastructure.Persistence.Repositories;
 using DogWalk_Domain.Interfaces.IRepositories;
 using Microsoft.EntityFrameworkCore;
 using DogWalk_Infrastructure.Persistence;
+using DogWalk_Infrastructure.Authentication;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -96,6 +97,9 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(DogWalk_Application.Features.Admin.Commands.CreateAdminCommand).Assembly));
 
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+builder.Services.AddSingleton<JwtProvider>();
+
 
 var app = builder.Build();
 

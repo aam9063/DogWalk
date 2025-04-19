@@ -4,16 +4,17 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace DogWalk_Infrastructure.Authentication
 {
     public class JwtProvider
     {
-        private readonly AuthOptions _options;
+        private readonly IConfiguration _configuration;
         
-        public JwtProvider(IOptions<AuthOptions> options)
+        public JwtProvider(IConfiguration configuration)
         {
-            _options = options.Value;
+            _configuration = configuration;
         }
         
         public string GenerateToken(Usuario usuario)
@@ -27,13 +28,18 @@ namespace DogWalk_Infrastructure.Authentication
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
             
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
+            var secretKey = _configuration["JwtSettings:Key"];
+            var issuer = _configuration["JwtSettings:Issuer"];
+            var audience = _configuration["JwtSettings:Audience"];
+            var expiryMinutes = _configuration.GetValue<int>("JwtSettings:DurationInMinutes");
+            
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.Now.AddMinutes(_options.ExpiryMinutes);
+            var expires = DateTime.Now.AddMinutes(expiryMinutes);
             
             var token = new JwtSecurityToken(
-                issuer: _options.Issuer,
-                audience: _options.Audience,
+                issuer: issuer,
+                audience: audience,
                 claims: claims,
                 expires: expires,
                 signingCredentials: creds
@@ -53,13 +59,18 @@ namespace DogWalk_Infrastructure.Authentication
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
             
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
+            var secretKey = _configuration["JwtSettings:Key"];
+            var issuer = _configuration["JwtSettings:Issuer"];
+            var audience = _configuration["JwtSettings:Audience"];
+            var expiryMinutes = _configuration.GetValue<int>("JwtSettings:DurationInMinutes");
+            
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.Now.AddMinutes(_options.ExpiryMinutes);
+            var expires = DateTime.Now.AddMinutes(expiryMinutes);
             
             var token = new JwtSecurityToken(
-                issuer: _options.Issuer,
-                audience: _options.Audience,
+                issuer: issuer,
+                audience: audience,
                 claims: claims,
                 expires: expires,
                 signingCredentials: creds

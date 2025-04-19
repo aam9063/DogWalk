@@ -75,13 +75,18 @@ namespace DogWalk_Domain.Entities;
         
         public void AgregarPrecio(Precio precio)
         {
-            // Verificar si ya existe un precio para ese servicio
-            var precioExistente = _precios.FirstOrDefault(p => p.ServicioId == precio.ServicioId);
-            if (precioExistente != null)
+            // Verificar que el precio sea para este paseador
+            if (precio.PaseadorId != Id)
             {
-                _precios.Remove(precioExistente);
+                throw new ArgumentException("El precio debe ser para este paseador");
             }
-            
+
+            // Verificar que no exista ya un precio para este servicio
+            if (_precios.Any(p => p.ServicioId == precio.ServicioId))
+            {
+                throw new InvalidOperationException("Ya existe un precio para este servicio");
+            }
+
             _precios.Add(precio);
             ActualizarFechaModificacion();
         }

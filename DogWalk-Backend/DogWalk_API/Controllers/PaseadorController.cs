@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DogWalk_Infrastructure.Authentication;
 
 namespace DogWalk_API.Controllers
 {
@@ -23,96 +24,116 @@ namespace DogWalk_API.Controllers
     public class PaseadorController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly JwtProvider _jwtProvider;
 
-        public PaseadorController(IUnitOfWork unitOfWork)
+        public PaseadorController(IUnitOfWork unitOfWork, JwtProvider jwtProvider)
         {
             _unitOfWork = unitOfWork;
+            _jwtProvider = jwtProvider;
         }
 
         // Registro de paseadores (público)
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<IActionResult> Register([FromBody] RegisterPaseadorDto registerDto)
+        public async Task<IActionResult> Register([FromBody] RegisterPaseadorDto dto)
         {
             try
             {
-                // Verificar si el email ya existe
-                var existingPaseador = await _unitOfWork.Paseadores.GetByEmailAsync(registerDto.Email);
-                if (existingPaseador != null)
+                if (!ModelState.IsValid)
                 {
-                    return BadRequest(new { message = "El email ya está registrado como paseador" });
+                    return BadRequest(ModelState);
                 }
 
-                // Verificar también en la tabla de usuarios
-                var existingUser = await _unitOfWork.Usuarios.GetByEmailAsync(registerDto.Email);
-                if (existingUser != null)
-                {
-                    return BadRequest(new { message = "El email ya está registrado como usuario" });
-                }
-
-                // Verificar que las contraseñas coincidan
-                if (registerDto.Password != registerDto.ConfirmPassword)
+                // Validar contraseña
+                if (dto.Password != dto.ConfirmPassword)
                 {
                     return BadRequest(new { message = "Las contraseñas no coinciden" });
                 }
 
-                // Crear coordenadas
-                // Como el constructor parece estar protegido, usamos el método estático Create si existe
-                var coordenadas = Coordenadas.Create(registerDto.Latitud, registerDto.Longitud);
+                // Verificar si el email ya está registrado
+                var usuarioExistente = await _unitOfWork.Usuarios.GetByEmailAsync(dto.Email);
+                if (usuarioExistente != null)
+                {
+                    return BadRequest(new { message = "El email ya está registrado" });
+                }
 
-                // Crear paseador
-                var paseador = new Paseador(
+                // Crear objetos de valor
+                var dni = Dni.Create(dto.Dni);
+                var direccion = Direccion.Create(dto.Direccion);
+                var email = Email.Create(dto.Email);
+                var telefono = Telefono.Create(dto.Telefono);
+                var password = Password.Create(dto.Password);
+                var coordenadas = Coordenadas.Create(dto.Latitud, dto.Longitud);
+
+                // Crear usuario nuevo (ajustando orden de parámetros)
+                var nuevoUsuario = new Usuario(
                     Guid.NewGuid(),
-                    Dni.Create(registerDto.Dni),
-                    registerDto.Nombre,
-                    registerDto.Apellido,
-                    Direccion.Create(registerDto.Direccion),
-                    Email.Create(registerDto.Email),
-                    Password.Create(registerDto.Password),
-                    coordenadas,
-                    Telefono.Create(registerDto.Telefono)
+                    dni,
+                    dto.Nombre,
+                    dto.Apellido,
+                    direccion,
+                    email,
+                    password,
+                    telefono,
+                    RolUsuario.Paseador  // Rol debe ser el último parámetro
                 );
 
-                // Crear precios para los servicios si se proporcionaron
-                if (registerDto.Servicios != null && registerDto.Servicios.Any())
+                // Crear paseador con todos los parámetros requeridos
+                var nuevoPaseador = new Paseador(
+                    nuevoUsuario.Id,
+                    dni,
+                    dto.Nombre,
+                    dto.Apellido,
+                    direccion,
+                    email,
+                    password,
+                    coordenadas,
+                    telefono
+                );
+
+                // Asignar servicios y precios
+                if (dto.Servicios != null && dto.Servicios.Any())
                 {
-                    foreach (var servicioPrecio in registerDto.Servicios)
+                    foreach (var servicio in dto.Servicios)
                     {
-                        var servicio = await _unitOfWork.Servicios.GetByIdAsync(servicioPrecio.ServicioId);
-                        if (servicio != null)
+                        // Verificar que el servicio existe
+                        var servicioExistente = await _unitOfWork.Servicios.GetByIdAsync(servicio.ServicioId);
+                        if (servicioExistente != null)
                         {
-                            var precio = new Precio(
+                            // Crear precio para este servicio
+                            var nuevoPrecio = new Precio(
                                 Guid.NewGuid(),
-                                paseador.Id,
-                                servicioPrecio.ServicioId,
-                                Dinero.Create(servicioPrecio.Precio)
+                                nuevoPaseador.Id,
+                                servicio.ServicioId,
+                                Dinero.Create(servicio.Precio)
                             );
-                            paseador.AgregarPrecio(precio);
+
+                            // Agregar precio a paseador
+                            // Verifica si este método necesita ser implementado en tu entidad Paseador
+                            nuevoPaseador.AgregarPrecio(nuevoPrecio);
                         }
                     }
                 }
-                else
-                {
-                    // Si no se proporcionaron servicios, agregamos precios por defecto para todos los servicios
-                    var servicios = await _unitOfWork.Servicios.GetAllAsync();
-                    foreach (var servicio in servicios)
-                    {
-                        var precio = new Precio(
-                            Guid.NewGuid(),
-                            paseador.Id,
-                            servicio.Id,
-                            Dinero.Create(10.0m)
-                        );
-                        paseador.AgregarPrecio(precio);
-                    }
-                }
 
-                await _unitOfWork.Paseadores.AddAsync(paseador);
+                // Persistir usuario y paseador
+                await _unitOfWork.Usuarios.AddAsync(nuevoUsuario);
+                await _unitOfWork.Paseadores.AddAsync(nuevoPaseador);
                 await _unitOfWork.SaveChangesAsync();
 
-                return Ok(new { 
-                    message = "Paseador registrado correctamente", 
-                    paseadorId = paseador.Id 
+                // Generar JWT token con tu JwtProvider existente
+                var token = _jwtProvider.GenerateToken(nuevoUsuario);
+
+                return Ok(new
+                {
+                    Token = token,
+                    Usuario = new
+                    {
+                        Id = nuevoUsuario.Id,
+                        Nombre = nuevoUsuario.Nombre,
+                        Apellido = nuevoUsuario.Apellido,
+                        Email = nuevoUsuario.Email.ToString(),
+                        Rol = nuevoUsuario.Rol.ToString()
+                    }
                 });
             }
             catch (Exception ex)
@@ -128,38 +149,53 @@ namespace DogWalk_API.Controllers
         {
             try
             {
-                // Obtener ID del paseador desde el token
-                var paseadorId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+                var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+                var paseador = await _unitOfWork.Paseadores.GetByIdAsync(userId);
                 
-                var paseador = await _unitOfWork.Paseadores.GetByIdAsync(paseadorId);
                 if (paseador == null)
                 {
-                    return NotFound(new { message = "Paseador no encontrado" });
+                    return NotFound(new { message = "Perfil de paseador no encontrado" });
                 }
-
-                // Obtener valoraciones
-                var valoraciones = await _unitOfWork.RankingPaseadores.GetByPaseadorIdAsync(paseadorId);
                 
-                // Crear DTO de perfil usando tu PaseadorProfileDto existente
-                var profileDto = new PaseadorProfileDto
+                var usuario = await _unitOfWork.Usuarios.GetByIdAsync(userId);
+                
+                // Obtener valoración promedio (llamar el método directamente)
+                double valoracionPromedio = await _unitOfWork.RankingPaseadores.GetPromedioPaseadorAsync(userId);
+                
+                // Obtener las valoraciones y contarlas después
+                var valoraciones = await _unitOfWork.RankingPaseadores.GetByPaseadorIdAsync(userId);
+                int cantidadValoraciones = valoraciones.Count();
+                
+                var result = new
                 {
                     Id = paseador.Id,
-                    Nombre = paseador.Nombre,
-                    Apellido = paseador.Apellido,
-                    FotoPerfil = paseador.FotoPerfil,
-                    ValoracionGeneral = paseador.ValoracionGeneral,
-                    CantidadValoraciones = valoraciones.Count(),
-                    Latitud = paseador.Ubicacion.Latitud,
-                    Longitud = paseador.Ubicacion.Longitud,
-                    Servicios = paseador.Precios.Select(p => new ServicioPrecioSimpleDto
+                    Nombre = usuario.Nombre,
+                    Apellido = usuario.Apellido,
+                    Email = usuario.Email.ToString(),
+                    Telefono = usuario.Telefono.ToString(),
+                    Direccion = usuario.Direccion.ToString(),
+                    Coordenadas = new
                     {
-                        ServicioId = p.ServicioId,
-                        NombreServicio = p.Servicio.Nombre,
+                        Latitud = paseador.Ubicacion.Latitud,
+                        Longitud = paseador.Ubicacion.Longitud
+                    },
+                    // Asignar un valor fijo o usar una propiedad adecuada de tu entidad
+                    RadioServicio = 5.0,
+                    // Usar el valor ya calculado
+                    ValoracionPromedio = valoracionPromedio,
+                    // Usar el valor ya calculado
+                    CantidadValoraciones = cantidadValoraciones,
+                    Servicios = paseador.Precios.Select(p => new
+                    {
+                        Id = p.ServicioId,
+                        Nombre = p.Servicio.Nombre,
+                        Descripcion = p.Servicio.Descripcion,
+                        Tipo = p.Servicio.Tipo.ToString(),
                         Precio = p.Valor.Cantidad
                     }).ToList()
                 };
-
-                return Ok(profileDto);
+                
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -203,59 +239,113 @@ namespace DogWalk_API.Controllers
         // Actualizar precios (protegido)
         [HttpPut("precios")]
         [Authorize(Roles = "Paseador")]
-        public async Task<IActionResult> UpdatePrecios([FromBody] List<ActualizarPrecioDto> preciosDto)
+        public async Task<IActionResult> UpdatePrecios([FromBody] List<DogWalk_Application.Contracts.DTOs.Paseadores.ActualizarPrecioDto> precios)
         {
             try
             {
-                var paseadorId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+                var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+                var paseador = await _unitOfWork.Paseadores.GetByIdAsync(userId);
                 
-                // Verificar que todos los precios correspondan al paseador autenticado
-                if (preciosDto.Any(p => p.PaseadorId != paseadorId))
-                {
-                    return BadRequest(new { message = "Solo puede actualizar sus propios precios" });
-                }
-                
-                var paseador = await _unitOfWork.Paseadores.GetByIdAsync(paseadorId);
                 if (paseador == null)
                 {
                     return NotFound(new { message = "Paseador no encontrado" });
                 }
-
-                // Actualizar precios
-                foreach (var precioDto in preciosDto)
+                
+                foreach (var precioDto in precios)
                 {
+                    // Verificar que el servicio existe
                     var servicio = await _unitOfWork.Servicios.GetByIdAsync(precioDto.ServicioId);
-                    if (servicio != null)
+                    if (servicio == null)
                     {
-                        // Verificar si ya existe un precio para este servicio
-                        var precioExistente = paseador.Precios.FirstOrDefault(p => p.ServicioId == precioDto.ServicioId);
+                        return BadRequest(new { message = $"Servicio con ID {precioDto.ServicioId} no encontrado" });
+                    }
+                    
+                    // Buscar si ya existe un precio para este servicio
+                    var precioExistente = paseador.Precios.FirstOrDefault(p => p.ServicioId == precioDto.ServicioId);
+                    
+                    if (precioExistente != null)
+                    {
+                        // Actualizar precio existente
+                        precioExistente.ActualizarPrecio(Dinero.Create(precioDto.Precio));
+                    }
+                    else
+                    {
+                        // Crear nuevo precio
+                        var nuevoPrecio = new Precio(
+                            Guid.NewGuid(),
+                            userId,
+                            precioDto.ServicioId,
+                            Dinero.Create(precioDto.Precio)
+                        );
                         
-                        if (precioExistente != null)
-                        {
-                            // Actualizar precio existente
-                            precioExistente.ActualizarPrecio(Dinero.Create(precioDto.Precio));
-                        }
-                        else
-                        {
-                            // Agregar nuevo precio
-                            var nuevoPrecio = new Precio(
-                                Guid.NewGuid(),
-                                paseadorId,
-                                precioDto.ServicioId,
-                                Dinero.Create(precioDto.Precio)
-                            );
-                            paseador.AgregarPrecio(nuevoPrecio);
-                        }
+                        // Asegúrate de que este método exista o implementa la lógica adecuada aquí
+                        paseador.AgregarPrecio(nuevoPrecio);
                     }
                 }
-
+                
                 await _unitOfWork.SaveChangesAsync();
-
+                
                 return Ok(new { message = "Precios actualizados correctamente" });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Error al actualizar precios: {ex.Message}" });
+            }
+        }
+
+        // Crear nuevo precio para un servicio
+        [HttpPost("precios")]
+        [Authorize(Roles = "Paseador")]
+        public async Task<IActionResult> CreatePrecio([FromBody] DogWalk_Application.Contracts.DTOs.Paseadores.ActualizarPrecioDto dto)
+        {
+            try
+            {
+                var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+                
+                // Verificar que el paseador existe
+                var paseador = await _unitOfWork.Paseadores.GetByIdAsync(userId);
+                if (paseador == null)
+                {
+                    return NotFound(new { message = "Paseador no encontrado" });
+                }
+                
+                // Verificar que el servicio existe
+                var servicio = await _unitOfWork.Servicios.GetByIdAsync(dto.ServicioId);
+                if (servicio == null)
+                {
+                    return NotFound(new { message = "Servicio no encontrado" });
+                }
+                
+                // Verificar si ya existe un precio para este servicio
+                if (paseador.Precios.Any(p => p.ServicioId == dto.ServicioId))
+                {
+                    return BadRequest(new { message = "Ya existe un precio para este servicio. Use PUT para actualizar." });
+                }
+                
+                // Crear nuevo precio
+                var nuevoPrecio = new Precio(
+                    Guid.NewGuid(),
+                    userId,
+                    dto.ServicioId,
+                    Dinero.Create(dto.Precio)
+                );
+                
+                // Agregar el precio al paseador
+                paseador.AgregarPrecio(nuevoPrecio);
+                
+                // Guardar cambios
+                await _unitOfWork.SaveChangesAsync();
+                
+                return Ok(new { 
+                    Id = nuevoPrecio.Id,
+                    PaseadorId = nuevoPrecio.PaseadorId,
+                    ServicioId = nuevoPrecio.ServicioId,
+                    Precio = nuevoPrecio.Valor.Cantidad
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al crear precio: {ex.Message}" });
             }
         }
 

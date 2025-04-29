@@ -97,6 +97,15 @@ public class StripeService
     /// <returns>El evento procesado</returns>
     public Event ProcessWebhookEvent(string json, string signatureHeader)
     {
+        if (string.IsNullOrEmpty(json))
+            throw new ArgumentNullException(nameof(json), "El JSON no puede ser nulo o vacío");
+        
+        if (string.IsNullOrEmpty(signatureHeader))
+            throw new ArgumentNullException(nameof(signatureHeader), "El encabezado de firma no puede ser nulo o vacío");
+        
+        if (string.IsNullOrEmpty(_options.WebhookSecret))
+            throw new InvalidOperationException("WebhookSecret no está configurado en las opciones de Stripe");
+        
         try
         {
             return EventUtility.ConstructEvent(
@@ -107,7 +116,7 @@ public class StripeService
         }
         catch (StripeException ex)
         {
-            throw new Exception($"Error al procesar webhook de Stripe: {ex.Message}");
+            throw new Exception($"Error al procesar webhook de Stripe: {ex.Message}", ex);
         }
     }
     

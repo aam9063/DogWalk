@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Security.Claims;
 
 namespace DogWalk_Infrastructure
 {
@@ -20,7 +21,8 @@ namespace DogWalk_Infrastructure
     {
         public static IServiceCollection AddInfrastructure(
             this IServiceCollection services,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            bool configureAuthentication = true)
         {
             // DbContext
             services.AddDbContext<DogWalkDbContext>(options =>
@@ -46,36 +48,43 @@ namespace DogWalk_Infrastructure
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             
             // Autenticación y sesión de usuario
-            services.Configure<AuthOptions>(configuration.GetSection("JWT"));
-            services.AddScoped<JwtProvider>();
-            services.AddScoped<UserSession>();
-            services.AddHttpContextAccessor();
-            
-            // JWT Authentication
-            var jwtOptions = configuration.GetSection("JWT").Get<AuthOptions>();
-            var key = Encoding.ASCII.GetBytes(jwtOptions.SecretKey);
-            
-            services.AddAuthentication(options =>
+            if (configureAuthentication)
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.RequireHttpsMetadata = false;
-                options.SaveToken = true;
-                options.TokenValidationParameters = new TokenValidationParameters
+                services.Configure<AuthOptions>(configuration.GetSection("JwtSettings"));
+                services.AddScoped<JwtProvider>();
+                services.AddScoped<UserSession>();
+                services.AddHttpContextAccessor();
+                
+                // JWT Authentication
+                var jwtOptions = configuration.GetSection("JwtSettings").Get<AuthOptions>();
+                if (jwtOptions != null)
                 {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtOptions.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtOptions.Audience,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero
-                };
-            });
+                    var key = Encoding.ASCII.GetBytes(jwtOptions.Key ?? jwtOptions.Key);
+                    
+                    services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                    })
+                    .AddJwtBearer(options =>
+                    {
+                        options.RequireHttpsMetadata = false;
+                        options.SaveToken = true;
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+                            ValidateIssuer = true,
+                            ValidIssuer = jwtOptions.Issuer,
+                            ValidateAudience = true,
+                            ValidAudience = jwtOptions.Audience,
+                            ValidateLifetime = true,
+                            ClockSkew = TimeSpan.Zero,
+                            NameClaimType = ClaimTypes.NameIdentifier
+                        };
+                    });
+                }
+            }
             
             // Servicio de Stripe
             services.Configure<StripeOptions>(configuration.GetSection("Stripe"));

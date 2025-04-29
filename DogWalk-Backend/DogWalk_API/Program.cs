@@ -14,11 +14,20 @@ using DogWalk_Domain.Interfaces.IRepositories;
 using Microsoft.EntityFrameworkCore;
 using DogWalk_Infrastructure.Persistence;
 using DogWalk_Infrastructure.Authentication;
+using DogWalk_API.Hubs;
+using DogWalk_Infrastructure.Services.Stripe;
+using DogWalk_Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+// Configuración de SignalR
+builder.Services.AddSignalR(options => 
+{
+    options.EnableDetailedErrors = true; 
+});
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -52,33 +61,19 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Configuración de la autenticación JWT
-builder.Services.AddAuthentication(options =>
+// Configuración CORS 
+builder.Services.AddCors(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+    options.AddPolicy("AllowSignalR", policy =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-        ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]))
-    };
+        policy.WithOrigins("http://localhost:5173") // URL del frontend
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // Importante para SignalR
+    });
 });
 
-builder.Services.AddAuthorization();
-
-// Registra las implementaciones de los repositorios y servicios
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// Registra los repositorios individuales si es necesario
+// Registra los repositorios individuales
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IPaseadorRepository, PaseadorRepository>();
 // ... otros repositorios
@@ -92,14 +87,12 @@ builder.Services.AddScoped<AdminService>();
 // ... otros servicios
 
 // Añade la configuración de MediatR
-// Ajusta el namespace para que apunte al proyecto donde están tus comandos/queries
 builder.Services.AddMediatR(cfg => 
     cfg.RegisterServicesFromAssembly(typeof(DogWalk_Application.Features.Admin.Commands.CreateAdminCommand).Assembly));
 
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
-builder.Services.AddSingleton<JwtProvider>();
-
+builder.Services.AddInfrastructure(builder.Configuration, configureAuthentication: false);
 
 var app = builder.Build();
 
@@ -109,23 +102,29 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DogWalk API v1"));
-    
-  
 }
 
-// Inicializar datos (esto debe estar DESPUÉS de builder.Build())
+// Inicializar datos
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-   
+    // Inicialización de datos si es necesario
 }
 
 app.UseHttpsRedirection();
 
+// IMPORTANTE: Orden correcto de middleware
 app.UseRouting();
+
+// CORS 
+
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/chatHub");
+
+app.UseCors("AllowSignalR");
 
 app.Run();

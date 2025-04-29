@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace DogWalk_Domain.Common.ValueObjects;
 

@@ -1,10 +1,11 @@
 using DogWalk_Domain.Interfaces.IRepositories;
 using DogWalk_Infrastructure.Persistence.Context;
 using DogWalk_Infrastructure.Persistence.Repositories;
-using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DogWalk_Infrastructure.Persistence
 {
@@ -83,6 +84,11 @@ namespace DogWalk_Infrastructure.Persistence
             _context.Dispose();
             _transaction?.Dispose();
             GC.SuppressFinalize(this);
+        }
+
+        public DbContext GetDbContext()
+        {
+            return _context;
         }
     }
 }

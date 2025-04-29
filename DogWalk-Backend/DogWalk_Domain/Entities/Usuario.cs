@@ -96,14 +96,43 @@ namespace DogWalk_Domain.Entities;
         
         public void AgregarItemCarrito(ItemCarrito item)
         {
-            _carrito.Add(item);
+            var existente = _carrito.FirstOrDefault(x => 
+                x.ItemId == item.ItemId && x.TipoItem == item.TipoItem);
+            
+            if (existente != null)
+            {
+                existente.ActualizarCantidad(existente.Cantidad + item.Cantidad);
+            }
+            else
+            {
+                _carrito.Add(item);
+            }
             ActualizarFechaModificacion();
         }
         
-        public void EliminarItemCarrito(ItemCarrito item)
+        public void ActualizarCantidadItemCarrito(Guid itemCarritoId, int nuevaCantidad)
         {
-            _carrito.Remove(item);
+            var item = _carrito.FirstOrDefault(x => x.Id == itemCarritoId);
+            if (item == null)
+                throw new InvalidOperationException("El ítem no existe en el carrito");
+            
+            item.ActualizarCantidad(nuevaCantidad);
             ActualizarFechaModificacion();
+        }
+        
+        public void EliminarItemCarrito(Guid itemCarritoId)
+        {
+            var item = _carrito.FirstOrDefault(x => x.Id == itemCarritoId);
+            if (item != null)
+            {
+                _carrito.Remove(item);
+                ActualizarFechaModificacion();
+            }
+        }
+        
+        public ItemCarrito ObtenerItemCarrito(Guid itemCarritoId)
+        {
+            return _carrito.FirstOrDefault(x => x.Id == itemCarritoId);
         }
         
         public void VaciarCarrito()

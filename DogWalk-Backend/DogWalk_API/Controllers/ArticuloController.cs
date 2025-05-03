@@ -7,6 +7,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace DogWalk_API.Controllers
@@ -90,6 +91,23 @@ namespace DogWalk_API.Controllers
             var resultado = await _mediator.Send(command);
             
             return CreatedAtAction(nameof(GetArticulo), new { id = resultado }, resultado);
+        }
+        
+        // POST: api/Articulo/batch
+        [HttpPost("batch")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<ActionResult<IEnumerable<Guid>>> CreateArticulosBatch(List<CreateArticuloDto> createArticuloDtos)
+        {
+            var resultados = new List<Guid>();
+            
+            foreach (var dto in createArticuloDtos)
+            {
+                var command = new CreateArticuloCommand { ArticuloDto = dto };
+                var resultado = await _mediator.Send(command);
+                resultados.Add(resultado);
+            }
+            
+            return Ok(resultados);
         }
         
         // PUT: api/Articulo/{id}

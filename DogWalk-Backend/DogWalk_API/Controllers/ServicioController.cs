@@ -254,5 +254,29 @@ namespace DogWalk_API.Controllers
                 return StatusCode(500, new { message = $"Error al eliminar servicio: {ex.Message}" });
             }
         }
+
+        // DogWalk_API/Controllers/ServicioController.cs - Agregar este endpoint
+        [HttpGet("filtros")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetServiciosFiltros()
+        {
+            try
+            {
+                var servicios = await _unitOfWork.Servicios.GetAllAsync();
+                
+                var serviciosFiltros = servicios.Select(s => new
+                {
+                    Id = s.Id,
+                    Nombre = s.Nombre,
+                    Tipo = s.Tipo.ToString()
+                }).ToList();
+                
+                return Ok(serviciosFiltros);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener servicios: {ex.Message}" });
+            }
+        }
     }
 }

@@ -16,6 +16,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DogWalk_Infrastructure.Authentication;
+using DogWalk_Application.Features.Paseadores.Queries;
+using MediatR;
+using DogWalk_Application.Contracts.DTOs.Busqueda;
 
 namespace DogWalk_API.Controllers
 {
@@ -25,11 +28,13 @@ namespace DogWalk_API.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly JwtProvider _jwtProvider;
+        private readonly IMediator _mediator;
 
-        public PaseadorController(IUnitOfWork unitOfWork, JwtProvider jwtProvider)
+        public PaseadorController(IUnitOfWork unitOfWork, JwtProvider jwtProvider, IMediator mediator)
         {
             _unitOfWork = unitOfWork;
             _jwtProvider = jwtProvider;
+            _mediator = mediator;
         }
 
         // Registro de paseadores (público)
@@ -537,6 +542,48 @@ namespace DogWalk_API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Error al obtener reservas: {ex.Message}" });
+            }
+        }
+
+        // DogWalk_API/Controllers/PaseadorController.cs - Agregar este endpoint
+        [HttpGet("buscar")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ResultadoPaginadoDto<PaseadorMapDto>>> BuscarPaseadores(
+            [FromQuery] string codigoPostal = null,
+            [FromQuery] DateTime? fechaEntrega = null,
+            [FromQuery] DateTime? fechaRecogida = null,
+            [FromQuery] int? cantidadPerros = null,
+            [FromQuery] Guid? servicioId = null,
+            [FromQuery] double? latitud = null,
+            [FromQuery] double? longitud = null,
+            [FromQuery] double? distanciaMaxima = 10.0,
+            [FromQuery] decimal? valoracionMinima = null,
+            [FromQuery] int pagina = 1,
+            [FromQuery] int elementosPorPagina = 10)
+        {
+            try
+            {
+                var query = new BuscarPaseadoresQuery
+                {
+                    CodigoPostal = codigoPostal,
+                    FechaEntrega = fechaEntrega,
+                    FechaRecogida = fechaRecogida,
+                    CantidadPerros = cantidadPerros,
+                    ServicioId = servicioId,
+                    Latitud = latitud,
+                    Longitud = longitud,
+                    DistanciaMaxima = distanciaMaxima,
+                    ValoracionMinima = valoracionMinima,
+                    Pagina = pagina,
+                    ElementosPorPagina = elementosPorPagina
+                };
+                
+                var resultado = await _mediator.Send(query);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al buscar paseadores: {ex.Message}" });
             }
         }
     }

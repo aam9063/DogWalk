@@ -73,6 +73,33 @@ builder.Services.AddCors(options =>
     });
 });
 
+// IMPORTANTE: Configura la autenticación ANTES de AddInfrastructure
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.SaveToken = true;
+    options.RequireHttpsMetadata = false;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidateAudience = true,
+        ValidAudience = jwtSettings["Audience"],
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
 // Registra los repositorios individuales
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IPaseadorRepository, PaseadorRepository>();
@@ -92,6 +119,7 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
+// IMPORTANTE: deshabilita la configuración de autenticación en Infrastructure
 builder.Services.AddInfrastructure(builder.Configuration, configureAuthentication: false);
 
 var app = builder.Build();
@@ -113,18 +141,15 @@ using (var scope = app.Services.CreateScope())
 
 app.UseHttpsRedirection();
 
-// IMPORTANTE: Orden correcto de middleware
+// CORS debe ir antes de Routing
+app.UseCors("AllowSignalR");
+
 app.UseRouting();
-
-// CORS 
-
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
-
-app.UseCors("AllowSignalR");
 
 app.Run();

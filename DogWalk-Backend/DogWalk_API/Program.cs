@@ -69,11 +69,10 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173") // URL del frontend
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials(); // Importante para SignalR
+              .AllowCredentials(); // SignalR
     });
 });
 
-// IMPORTANTE: Configura la autenticación ANTES de AddInfrastructure
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
 
@@ -119,7 +118,11 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
-// IMPORTANTE: deshabilita la configuración de autenticación en Infrastructure
+// Registra manualmente JwtProvider
+builder.Services.AddScoped<JwtProvider>();
+
+// IMPORTANTE: deshabilita la configuración de autenticación en Infrastructure 
+// ya que la hemos configurado manualmente arriba
 builder.Services.AddInfrastructure(builder.Configuration, configureAuthentication: false);
 
 var app = builder.Build();

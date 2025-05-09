@@ -48,8 +48,12 @@ public class StripeService
         foreach (var detalle in factura.Detalles)
         {
             var articulo = detalle.Articulo; // Asumiendo que está cargado por EF Core
+            if (articulo == null)
+            {
+                throw new InvalidOperationException($"No se pudo cargar el artículo para el detalle {detalle.Id}");
+            }
             
-            options.LineItems.Add(new SessionLineItemOptions
+            var lineItem = new SessionLineItemOptions
             {
                 PriceData = new SessionLineItemPriceDataOptions
                 {
@@ -57,16 +61,26 @@ public class StripeService
                     UnitAmount = (long)(detalle.PrecioUnitario.Cantidad * 100), // Stripe usa centavos
                     ProductData = new SessionLineItemPriceDataProductDataOptions
                     {
-                        Name = articulo.Nombre,
-                        Description = articulo.Descripcion,
-                        Images = articulo.Imagenes
-                            .Where(i => i.EsPrincipal)
-                            .Select(i => i.UrlImagen)
-                            .ToList()
+                        Name = articulo.Nombre ?? "Producto sin nombre",
+                        Description = articulo.Descripcion ?? "Sin descripción"
                     }
                 },
                 Quantity = detalle.Cantidad
-            });
+            };
+
+            // Agregar imágenes solo si existen
+            if (articulo.Imagenes != null && articulo.Imagenes.Any())
+            {
+                var imagenPrincipal = articulo.Imagenes
+                    .FirstOrDefault(i => i.EsPrincipal)?.UrlImagen;
+                    
+                if (!string.IsNullOrEmpty(imagenPrincipal))
+                {
+                    lineItem.PriceData.ProductData.Images = new List<string> { imagenPrincipal };
+                }
+            }
+
+            options.LineItems.Add(lineItem);
         }
 
         var service = new SessionService();

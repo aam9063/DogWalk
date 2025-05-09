@@ -1,23 +1,21 @@
-using System;
+using DogWalk_Domain.Common.Enums;
 
-namespace DogWalk_Application.Contracts.DTOs.Carrito
+namespace DogWalk_Application.Contracts.DTOs.Carrito;
+
+public class CheckoutDto
 {
-    public class CheckoutDto
-    {
-        public string MetodoPago { get; set; } = "Stripe"; // Valor por defecto
-        public DireccionEnvioDto DireccionEnvio { get; set; }
-    }
+    public MetodoPago MetodoPago { get; set; }
+    public DireccionEnvioDto DireccionEnvio { get; set; }
+}
 
-    public class DireccionEnvioDto
-    {
-        public string Nombre { get; set; }
-        public string Apellido { get; set; }
-        public string Calle { get; set; }
-        public string Ciudad { get; set; }
-        public string CodigoPostal { get; set; }
-        public string Provincia { get; set; }
-        public string Telefono { get; set; }
-        // Opcionalmente puedes guardar esta dirección para futuras compras
-        public bool GuardarDireccion { get; set; } = false;
-    }
+public class DireccionEnvioDto
+{
+    public string Nombre { get; set; }
+    public string Apellido { get; set; }
+    public string Calle { get; set; }
+    public string Ciudad { get; set; }
+    public string CodigoPostal { get; set; }
+    public string Provincia { get; set; }
+    public string Telefono { get; set; }
+    public bool GuardarDireccion { get; set; }
 }

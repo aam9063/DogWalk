@@ -5,14 +5,15 @@ using System.Threading.Tasks;
 
 namespace DogWalk_Domain.Interfaces.IRepositories;
 
- public interface IRepository<T> where T : class
-    {
-        Task<T> GetByIdAsync(Guid id);
-        Task<IEnumerable<T>> GetAllAsync();
-        Task<T> AddAsync(T entity);
-        Task UpdateAsync(T entity);
-        Task DeleteAsync(T entity);
-    
+public interface IRepository<T> where T : class
+{
+    Task<T> GetByIdAsync(Guid id);
+    Task<IEnumerable<T>> GetAllAsync();
+    Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate);
+    Task<T> AddAsync(T entity);
+    Task UpdateAsync(T entity);
+    Task DeleteAsync(T entity);
+
     // Métodos para paginación
     Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize);
     Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(Expression<Func<T, bool>> predicate, int pageNumber, int pageSize);
@@ -22,4 +23,4 @@ namespace DogWalk_Domain.Interfaces.IRepositories;
         bool ascending = true, 
         int pageNumber = 1, 
         int pageSize = 10);
-    }
+}

@@ -12,9 +12,8 @@ namespace DogWalk_Infrastructure.Persistence.Configurations
             
             builder.HasKey(i => i.Id);
             
-            builder.Property(i => i.TipoItem)
-                .IsRequired()
-                .HasConversion<string>();
+            builder.Property(i => i.ArticuloId)
+                .IsRequired();
                 
             builder.Property(i => i.Cantidad)
                 .IsRequired();
@@ -40,23 +39,10 @@ namespace DogWalk_Infrastructure.Persistence.Configurations
                    .HasForeignKey(i => i.UsuarioId)
                    .OnDelete(DeleteBehavior.Cascade);
 
-            builder
-                .HasOne<Articulo>()
-                .WithMany()
-                .HasForeignKey(i => i.ItemId)
-                .HasPrincipalKey(a => a.Id)
-                .OnDelete(DeleteBehavior.Restrict)
-                .IsRequired(false)
-                .HasConstraintName("FK_ItemCarrito_Articulo");
-
-            builder
-                .HasOne<Servicio>()
-                .WithMany()
-                .HasForeignKey(i => i.ItemId)
-                .HasPrincipalKey(s => s.Id)
-                .OnDelete(DeleteBehavior.Restrict)
-                .IsRequired(false)
-                .HasConstraintName("FK_ItemCarrito_Servicio");
+            builder.HasOne(i => i.Articulo)
+                   .WithMany()
+                   .HasForeignKey(i => i.ArticuloId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

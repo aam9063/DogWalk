@@ -96,43 +96,43 @@ namespace DogWalk_Domain.Entities;
         
         public void AgregarItemCarrito(ItemCarrito item)
         {
-            var existente = _carrito.FirstOrDefault(x => 
-                x.ItemId == item.ItemId && x.TipoItem == item.TipoItem);
+            var itemExistente = _carrito.FirstOrDefault(i => i.ArticuloId == item.ArticuloId);
             
-            if (existente != null)
+            if (itemExistente != null)
             {
-                existente.ActualizarCantidad(existente.Cantidad + item.Cantidad);
+                itemExistente.ActualizarCantidad(itemExistente.Cantidad + item.Cantidad);
             }
             else
             {
                 _carrito.Add(item);
             }
+            
             ActualizarFechaModificacion();
         }
         
-        public void ActualizarCantidadItemCarrito(Guid itemCarritoId, int nuevaCantidad)
+        public ItemCarrito ObtenerItemCarrito(Guid itemId)
         {
-            var item = _carrito.FirstOrDefault(x => x.Id == itemCarritoId);
+            return _carrito.FirstOrDefault(i => i.Id == itemId);
+        }
+        
+        public void ActualizarCantidadItemCarrito(Guid itemId, int cantidad)
+        {
+            var item = ObtenerItemCarrito(itemId);
             if (item == null)
                 throw new InvalidOperationException("El ítem no existe en el carrito");
-            
-            item.ActualizarCantidad(nuevaCantidad);
+
+            item.ActualizarCantidad(cantidad);
             ActualizarFechaModificacion();
         }
         
-        public void EliminarItemCarrito(Guid itemCarritoId)
+        public void EliminarItemCarrito(Guid itemId)
         {
-            var item = _carrito.FirstOrDefault(x => x.Id == itemCarritoId);
+            var item = ObtenerItemCarrito(itemId);
             if (item != null)
             {
                 _carrito.Remove(item);
                 ActualizarFechaModificacion();
             }
-        }
-        
-        public ItemCarrito ObtenerItemCarrito(Guid itemCarritoId)
-        {
-            return _carrito.FirstOrDefault(x => x.Id == itemCarritoId);
         }
         
         public void VaciarCarrito()

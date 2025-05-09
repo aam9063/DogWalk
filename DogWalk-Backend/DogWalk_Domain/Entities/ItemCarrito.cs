@@ -6,8 +6,7 @@ namespace DogWalk_Domain.Entities;
 public class ItemCarrito : EntityBase
     {
         public Guid UsuarioId { get; private set; }
-        public TipoItem TipoItem { get; private set; }
-        public Guid ItemId { get; private set; }  // Id del Servicio o Articulo
+        public Guid ArticuloId { get; private set; }  // Cambiado de ItemId a ArticuloId
         public int Cantidad { get; private set; }
         public Dinero PrecioUnitario { get; private set; }
         
@@ -16,14 +15,14 @@ public class ItemCarrito : EntityBase
         
         // Relaciones
         public Usuario Usuario { get; private set; }
+        public Articulo Articulo { get; private set; }
         
         private ItemCarrito() : base() { } // Para EF Core
         
         public ItemCarrito(
             Guid id,
             Guid usuarioId,
-            TipoItem tipoItem,
-            Guid itemId,
+            Guid articuloId,  // Cambiado el nombre del parámetro
             int cantidad,
             Dinero precioUnitario
         ) : base(id)
@@ -32,8 +31,7 @@ public class ItemCarrito : EntityBase
                 throw new ArgumentException("La cantidad debe ser mayor a cero", nameof(cantidad));
                 
             UsuarioId = usuarioId;
-            TipoItem = tipoItem;
-            ItemId = itemId;
+            ArticuloId = articuloId;  // Cambiado
             Cantidad = cantidad;
             PrecioUnitario = precioUnitario;
         }

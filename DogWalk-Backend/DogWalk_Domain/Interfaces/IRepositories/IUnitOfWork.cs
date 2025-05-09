@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 namespace DogWalk_Domain.Interfaces.IRepositories;
 
@@ -19,10 +18,10 @@ public interface IUnitOfWork : IDisposable
     IOpinionPerroRepository OpinionesPerros { get; }
     IRankingPaseadorRepository RankingPaseadores { get; }
     
-    DbContext GetDbContext();
     
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();
     Task RollbackTransactionAsync();
+    Task<T> AddAsync<T>(T entity) where T : class;
 }

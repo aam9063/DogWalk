@@ -21,43 +21,38 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
         public async Task<Usuario> GetByEmailAsync(string email)
         {
             // Traer todos los usuarios (no eficiente pero funcionará para testing)
-            var usuarios = await _dbContext.Usuarios.ToListAsync();
+            var usuarios = await _context.Usuarios.ToListAsync();
             return usuarios.FirstOrDefault(u => u.Email.ToString() == email);
         }
 
         public async Task<IEnumerable<Usuario>> GetByRolAsync(RolUsuario rol)
         {
-            return await _dbContext.Usuarios
-                .AsNoTracking()
+            return await _dbSet.AsNoTracking()
                 .Where(u => u.Rol == rol)
                 .ToListAsync();
         }
 
         public async Task<bool> ExisteEmailAsync(string email)
         {
-            return await _dbContext.Usuarios
-                .AsNoTracking()
+            return await _dbSet.AsNoTracking()
                 .AnyAsync(u => u.Email.ToString() == email);
         }
 
         public async Task<bool> ExisteDniAsync(string dni)
         {
-            return await _dbContext.Usuarios
-                .AsNoTracking()
+            return await _dbSet.AsNoTracking()
                 .AnyAsync(u => u.Dni.ToString() == dni);
         }
 
         public async Task<Usuario> GetFirstOrDefaultAsync(Expression<Func<Usuario, bool>> predicate)
         {
-            return await _dbContext.Usuarios
-                .AsNoTracking()
+            return await _dbSet.AsNoTracking()
                 .FirstOrDefaultAsync(predicate);
         }
 
         public async Task<IEnumerable<Usuario>> GetAsync(Expression<Func<Usuario, bool>> predicate)
         {
-            return await _dbContext.Usuarios
-                .AsNoTracking()
+            return await _dbSet.AsNoTracking()
                 .Where(predicate)
                 .ToListAsync();
         }
@@ -94,7 +89,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 new Microsoft.Data.SqlClient.SqlParameter("@ModificadoEn", ahora)
             };
             
-            await _dbContext.Database.ExecuteSqlRawAsync(sql, parameters);
+            await _context.Database.ExecuteSqlRawAsync(sql, parameters);
             
             return adminId;
         }
@@ -120,7 +115,17 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 new Microsoft.Data.SqlClient.SqlParameter("@UserId", userId)
             };
             
-            await _dbContext.Database.ExecuteSqlRawAsync(sql, parameters);
+            await _context.Database.ExecuteSqlRawAsync(sql, parameters);
+        }
+
+        public async Task<Usuario> GetByIdWithCarritoAsync(Guid id)
+        {
+            return await _context.Usuarios
+                .Include(u => u.Carrito)
+                    .ThenInclude(c => c.Articulo)
+                        .ThenInclude(a => a.Imagenes)
+                .AsTracking()
+                .FirstOrDefaultAsync(u => u.Id == id);
         }
     }
 }

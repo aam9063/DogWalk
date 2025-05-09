@@ -1,6 +1,6 @@
 using DogWalk_Domain.Common.ValueObjects;
 using DogWalk_Domain.Entities;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using Stripe;
 using Stripe.Checkout;
 using System;
@@ -12,12 +12,14 @@ namespace DogWalk_Infrastructure.Services.Stripe;
 
 public class StripeService
 {
-    private readonly StripeOptions _options;
-    
-    public StripeService(IOptions<StripeOptions> options)
+    private readonly string _apiKey;
+    private readonly string _webhookSecret;
+
+    public StripeService(IConfiguration configuration)
     {
-        _options = options.Value;
-        StripeConfiguration.ApiKey = _options.SecretKey;
+        _apiKey = configuration["Stripe:SecretKey"];
+        _webhookSecret = configuration["Stripe:WebhookSecret"];
+        StripeConfiguration.ApiKey = _apiKey;
     }
     
     /// <summary>
@@ -29,46 +31,44 @@ public class StripeService
     /// <returns>URL de la sesión de pago de Stripe</returns>
     public async Task<string> CreateCheckoutSession(Factura factura, string successUrl, string cancelUrl)
     {
-        var lineItems = new List<SessionLineItemOptions>();
-        
-        foreach (var detalle in factura.Detalles)
-        {
-            string descripcion = detalle.TipoItem == DogWalk_Domain.Common.Enums.TipoItem.Articulo 
-                ? "Artículo" 
-                : "Servicio";
-            
-            lineItems.Add(new SessionLineItemOptions
-            {
-                PriceData = new SessionLineItemPriceDataOptions
-                {
-                    UnitAmount = (long)(detalle.PrecioUnitario.Cantidad * 100), // Stripe usa centavos
-                    Currency = _options.Currency,
-                    ProductData = new SessionLineItemPriceDataProductDataOptions
-                    {
-                        Name = $"{descripcion} #{detalle.ItemId}",
-                        Description = $"{descripcion} de DogWalk",
-                    }
-                },
-                Quantity = detalle.Cantidad,
-            });
-        }
-        
         var options = new SessionCreateOptions
         {
             PaymentMethodTypes = new List<string> { "card" },
-            LineItems = lineItems,
+            LineItems = new List<SessionLineItemOptions>(),
             Mode = "payment",
-            SuccessUrl = $"{successUrl}?session_id={{CHECKOUT_SESSION_ID}}",
+            SuccessUrl = successUrl,
             CancelUrl = cancelUrl,
-            ClientReferenceId = factura.Id.ToString(),
-            CustomerEmail = factura.Usuario.Email.Valor,
             Metadata = new Dictionary<string, string>
             {
-                { "FacturaId", factura.Id.ToString() },
-                { "UsuarioId", factura.UsuarioId.ToString() }
+                { "FacturaId", factura.Id.ToString() }
             }
         };
-        
+
+        // Agregar items a la sesión de Stripe
+        foreach (var detalle in factura.Detalles)
+        {
+            var articulo = detalle.Articulo; // Asumiendo que está cargado por EF Core
+            
+            options.LineItems.Add(new SessionLineItemOptions
+            {
+                PriceData = new SessionLineItemPriceDataOptions
+                {
+                    Currency = detalle.PrecioUnitario.Moneda.ToLower(),
+                    UnitAmount = (long)(detalle.PrecioUnitario.Cantidad * 100), // Stripe usa centavos
+                    ProductData = new SessionLineItemPriceDataProductDataOptions
+                    {
+                        Name = articulo.Nombre,
+                        Description = articulo.Descripcion,
+                        Images = articulo.Imagenes
+                            .Where(i => i.EsPrincipal)
+                            .Select(i => i.UrlImagen)
+                            .ToList()
+                    }
+                },
+                Quantity = detalle.Cantidad
+            });
+        }
+
         var service = new SessionService();
         var session = await service.CreateAsync(options);
         
@@ -97,26 +97,17 @@ public class StripeService
     /// <returns>El evento procesado</returns>
     public Event ProcessWebhookEvent(string json, string signatureHeader)
     {
-        if (string.IsNullOrEmpty(json))
-            throw new ArgumentNullException(nameof(json), "El JSON no puede ser nulo o vacío");
-        
-        if (string.IsNullOrEmpty(signatureHeader))
-            throw new ArgumentNullException(nameof(signatureHeader), "El encabezado de firma no puede ser nulo o vacío");
-        
-        if (string.IsNullOrEmpty(_options.WebhookSecret))
-            throw new InvalidOperationException("WebhookSecret no está configurado en las opciones de Stripe");
-        
         try
         {
             return EventUtility.ConstructEvent(
                 json,
                 signatureHeader,
-                _options.WebhookSecret
+                _webhookSecret
             );
         }
-        catch (StripeException ex)
+        catch (StripeException e)
         {
-            throw new Exception($"Error al procesar webhook de Stripe: {ex.Message}", ex);
+            throw new Exception($"Error al procesar webhook de Stripe: {e.Message}");
         }
     }
     

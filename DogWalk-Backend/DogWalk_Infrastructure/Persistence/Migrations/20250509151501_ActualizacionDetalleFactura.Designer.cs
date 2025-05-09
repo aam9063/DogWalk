@@ -4,6 +4,7 @@ using DogWalk_Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DogWalk_Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(DogWalkDbContext))]
-    partial class DogWalkDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250509151501_ActualizacionDetalleFactura")]
+    partial class ActualizacionDetalleFactura
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -259,14 +262,14 @@ namespace DogWalk_Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("ArticuloId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreadoEn")
                         .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("ModificadoEn")
                         .HasColumnType("datetime2");
@@ -276,7 +279,7 @@ namespace DogWalk_Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ArticuloId");
+                    b.HasIndex("ItemId");
 
                     b.HasIndex("UsuarioId");
 
@@ -537,21 +540,21 @@ namespace DogWalk_Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("8f7779b5-e30e-4e38-bdf4-79c533696187"),
-                            CreadoEn = new DateTime(2025, 5, 9, 15, 38, 9, 326, DateTimeKind.Utc).AddTicks(970),
+                            CreadoEn = new DateTime(2025, 5, 9, 15, 15, 1, 200, DateTimeKind.Utc).AddTicks(2239),
                             Nombre = "Administrador",
                             TipoRol = 1
                         },
                         new
                         {
                             Id = new Guid("c2fbf3a7-adfa-4ac4-b384-14874661c995"),
-                            CreadoEn = new DateTime(2025, 5, 9, 15, 38, 9, 326, DateTimeKind.Utc).AddTicks(974),
+                            CreadoEn = new DateTime(2025, 5, 9, 15, 15, 1, 200, DateTimeKind.Utc).AddTicks(2243),
                             Nombre = "Usuario",
                             TipoRol = 2
                         },
                         new
                         {
                             Id = new Guid("95b2b3ff-f0c1-4819-a842-0d0b6e111c0d"),
-                            CreadoEn = new DateTime(2025, 5, 9, 15, 38, 9, 326, DateTimeKind.Utc).AddTicks(975),
+                            CreadoEn = new DateTime(2025, 5, 9, 15, 15, 1, 200, DateTimeKind.Utc).AddTicks(2245),
                             Nombre = "Paseador",
                             TipoRol = 3
                         });
@@ -591,7 +594,7 @@ namespace DogWalk_Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("dbc1c3f6-6230-46c9-a344-7d5d647738be"),
-                            CreadoEn = new DateTime(2025, 5, 9, 15, 38, 9, 326, DateTimeKind.Utc).AddTicks(1113),
+                            CreadoEn = new DateTime(2025, 5, 9, 15, 15, 1, 200, DateTimeKind.Utc).AddTicks(2406),
                             Descripcion = "Paseo de 30 minutos con un paseador profesional",
                             Nombre = "Paseo estándar",
                             Tipo = "Paseo"
@@ -599,7 +602,7 @@ namespace DogWalk_Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("7a5d6a55-43d0-4825-b5c0-7ce22ebd142c"),
-                            CreadoEn = new DateTime(2025, 5, 9, 15, 38, 9, 326, DateTimeKind.Utc).AddTicks(1117),
+                            CreadoEn = new DateTime(2025, 5, 9, 15, 15, 1, 200, DateTimeKind.Utc).AddTicks(2412),
                             Descripcion = "Paseo de 60 minutos con un paseador profesional",
                             Nombre = "Paseo premium",
                             Tipo = "Paseo"
@@ -607,7 +610,7 @@ namespace DogWalk_Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("e0da5de2-b1e3-4c4d-b03d-b35c7f12c5d7"),
-                            CreadoEn = new DateTime(2025, 5, 9, 15, 38, 9, 326, DateTimeKind.Utc).AddTicks(1118),
+                            CreadoEn = new DateTime(2025, 5, 9, 15, 15, 1, 200, DateTimeKind.Utc).AddTicks(2415),
                             Descripcion = "Cuidado durante el día en casa del paseador (8 horas)",
                             Nombre = "Guardería diurna",
                             Tipo = "GuarderiaDia"
@@ -615,7 +618,7 @@ namespace DogWalk_Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("d21b1406-2dce-4cd9-9b0f-e1c366ac6c4c"),
-                            CreadoEn = new DateTime(2025, 5, 9, 15, 38, 9, 326, DateTimeKind.Utc).AddTicks(1119),
+                            CreadoEn = new DateTime(2025, 5, 9, 15, 15, 1, 200, DateTimeKind.Utc).AddTicks(2416),
                             Descripcion = "Cuidado durante la noche en casa del paseador (12 horas)",
                             Nombre = "Guardería nocturna",
                             Tipo = "GuarderiaNoche"
@@ -834,7 +837,7 @@ namespace DogWalk_Infrastructure.Persistence.Migrations
                 {
                     b.HasOne("DogWalk_Domain.Entities.Articulo", "Articulo")
                         .WithMany()
-                        .HasForeignKey("ArticuloId")
+                        .HasForeignKey("ItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("FK_ItemCarrito_Articulo");

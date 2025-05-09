@@ -4,7 +4,7 @@ namespace DogWalk_Application.Contracts.DTOs.Carrito
 {
     public class CheckoutDto
     {
-        public string MetodoPago { get; set; } // "Stripe", "PayPal"
+        public string MetodoPago { get; set; } = "Stripe"; // Valor por defecto
         public DireccionEnvioDto DireccionEnvio { get; set; }
     }
 

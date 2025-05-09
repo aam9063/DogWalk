@@ -9,40 +9,47 @@ using System.Threading.Tasks;
 
 namespace DogWalk_Infrastructure.Persistence.Repositories
 {
-    public class RepositoryBase<T> : IRepository<T> where T : class
+    public abstract class RepositoryBase<T> : IRepository<T> where T : class
     {
-        protected readonly DogWalkDbContext _dbContext;
+        protected readonly DogWalkDbContext _context;
+        protected readonly DbSet<T> _dbSet;
         
-        public RepositoryBase(DogWalkDbContext dbContext)
+        protected RepositoryBase(DogWalkDbContext context)
         {
-            _dbContext = dbContext;
+            _context = context;
+            _dbSet = context.Set<T>();
         }
         
         public virtual async Task<T> GetByIdAsync(Guid id)
         {
-            return await _dbContext.Set<T>().FindAsync(id);
+            return await _dbSet.FindAsync(id);
         }
         
         public virtual async Task<IEnumerable<T>> GetAllAsync()
         {
-            return await _dbContext.Set<T>().ToListAsync();
+            return await _dbSet.ToListAsync();
+        }
+        
+        public virtual async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.Where(predicate).ToListAsync();
         }
         
         public virtual async Task<T> AddAsync(T entity)
         {
-            await _dbContext.Set<T>().AddAsync(entity);
+            await _dbSet.AddAsync(entity);
             return entity;
         }
         
         public virtual async Task UpdateAsync(T entity)
         {
-            _dbContext.Entry(entity).State = EntityState.Modified;
+            _dbSet.Update(entity);
             await Task.CompletedTask;
         }
         
         public virtual async Task DeleteAsync(T entity)
         {
-            _dbContext.Set<T>().Remove(entity);
+            _dbSet.Remove(entity);
             await Task.CompletedTask;
         }
         
@@ -50,7 +57,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
         
         public virtual async Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize)
         {
-            var query = _dbContext.Set<T>().AsNoTracking();
+            var query = _dbSet.AsNoTracking();
             var totalCount = await query.CountAsync();
             
             var items = await query
@@ -64,7 +71,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
         public virtual async Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(
             Expression<Func<T, bool>> predicate, int pageNumber, int pageSize)
         {
-            var query = _dbContext.Set<T>().AsNoTracking().Where(predicate);
+            var query = _dbSet.AsNoTracking().Where(predicate);
             var totalCount = await query.CountAsync();
             
             var items = await query
@@ -82,7 +89,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
             int pageNumber = 1, 
             int pageSize = 10)
         {
-            var query = _dbContext.Set<T>().AsNoTracking().Where(predicate);
+            var query = _dbSet.AsNoTracking().Where(predicate);
             var totalCount = await query.CountAsync();
             
             query = ascending ? query.OrderBy(orderBy) : query.OrderByDescending(orderBy);

@@ -52,7 +52,7 @@ namespace DogWalk_Infrastructure.Persistence.Configurations
             // Relación con ItemCarrito
             builder.HasMany<ItemCarrito>()
                    .WithOne()
-                   .HasForeignKey(i => i.ItemId)
+                   .HasForeignKey(i => i.ArticuloId)
                    .HasPrincipalKey(a => a.Id)
                    .OnDelete(DeleteBehavior.Restrict)
                    .IsRequired()
@@ -61,7 +61,7 @@ namespace DogWalk_Infrastructure.Persistence.Configurations
             // Relación con DetalleFactura
             builder.HasMany<DetalleFactura>()
                    .WithOne()
-                   .HasForeignKey(d => d.ItemId)
+                   .HasForeignKey(d => d.ArticuloId)
                    .HasPrincipalKey(a => a.Id)
                    .OnDelete(DeleteBehavior.Restrict)
                    .IsRequired()

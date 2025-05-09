@@ -12,10 +12,6 @@ namespace DogWalk_Infrastructure.Persistence.Configurations
             
             builder.HasKey(d => d.Id);
             
-            builder.Property(d => d.TipoItem)
-                .IsRequired()
-                .HasConversion<string>();
-                
             builder.Property(d => d.Cantidad)
                 .IsRequired();
                 
@@ -28,25 +24,22 @@ namespace DogWalk_Infrastructure.Persistence.Configurations
                    .HasPrecision(10, 2);
                    
                 p.Property(x => x.Moneda)
-                   .HasColumnName("MonedaPrecio")
+                   .HasColumnName("Moneda")
                    .IsRequired()
                    .HasMaxLength(3)
                    .HasDefaultValue("EUR");
             });
             
-            builder.OwnsOne(d => d.Subtotal, s =>
-            {
-                s.Property(x => x.Cantidad)
-                   .HasColumnName("Subtotal")
-                   .IsRequired()
-                   .HasPrecision(10, 2);
+            // Relaciones
+            builder.HasOne(d => d.Factura)
+                   .WithMany(f => f.Detalles)
+                   .HasForeignKey(d => d.FacturaId)
+                   .OnDelete(DeleteBehavior.Cascade);
                    
-                s.Property(x => x.Moneda)
-                   .HasColumnName("MonedaSubtotal")
-                   .IsRequired()
-                   .HasMaxLength(3)
-                   .HasDefaultValue("EUR");
-            });
+            builder.HasOne(d => d.Articulo)
+                   .WithMany()
+                   .HasForeignKey(d => d.ArticuloId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

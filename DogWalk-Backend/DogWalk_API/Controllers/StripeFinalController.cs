@@ -128,49 +128,42 @@ namespace DogWalk_API.Controllers
         {
             try
             {
-                // Obtener servicios bajo demanda
                 var unitOfWork = GetUnitOfWork(HttpContext);
                 var stripeService = GetStripeService(HttpContext);
                 var logger = GetLogger(HttpContext);
                 
-                // Obtener ID del usuario desde los claims
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out Guid usuarioId))
                 {
                     return Unauthorized(new { error = "Usuario no identificado" });
                 }
                 
-                // Obtener usuario y su carrito
                 var usuario = await unitOfWork.Usuarios.GetByIdAsync(usuarioId);
                 if (usuario == null) return NotFound(new { error = "Usuario no encontrado" });
                 
                 if (!usuario.Carrito.Any())
                     return BadRequest(new { error = "El carrito está vacío" });
                 
-                // Crear factura
                 var factura = new Factura(
                     Guid.NewGuid(), 
                     usuarioId, 
                     MetodoPago.Stripe
                 );
                 
-                // Agregar ítems del carrito a la factura
                 foreach(var item in usuario.Carrito)
                 {
-                    factura.AgregarDetalle(new DetalleFactura(
+                    var detalle = new DetalleFactura(
                         Guid.NewGuid(),
                         factura.Id,
-                        item.TipoItem,
-                        item.ItemId,
+                        item.ArticuloId,
                         item.Cantidad,
                         item.PrecioUnitario
-                    ));
+                    );
+                    factura.AgregarDetalle(detalle);
                 }
                 
-                // Guardar factura
                 await unitOfWork.Facturas.AddAsync(factura);
                 
-                // Crear sesión de Stripe
                 var successUrl = "http://localhost:5173/checkout/success?session_id={CHECKOUT_SESSION_ID}";
                 var cancelUrl = "http://localhost:5173/checkout/cancel";
                 
@@ -180,9 +173,7 @@ namespace DogWalk_API.Controllers
                     cancelUrl
                 );
                 
-                // Opcional: Vaciar carrito o marcarlo como en proceso de pago
                 usuario.VaciarCarrito();
-                
                 await unitOfWork.SaveChangesAsync();
                 
                 return Ok(new { url = stripeSessionUrl, facturaId = factura.Id });

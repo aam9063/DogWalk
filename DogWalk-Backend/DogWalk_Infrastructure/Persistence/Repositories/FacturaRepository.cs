@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DogWalk_Infrastructure.Persistence.Repositories;
 
-public class FacturaRepository : GenericRepository<Factura>, IFacturaRepository
+public class FacturaRepository : RepositoryBase<Factura>, IFacturaRepository
 {
     public FacturaRepository(DogWalkDbContext context) : base(context)
     {
@@ -19,17 +19,14 @@ public class FacturaRepository : GenericRepository<Factura>, IFacturaRepository
     public async Task<IEnumerable<Factura>> GetByUsuarioIdAsync(Guid usuarioId)
     {
         return await _context.Facturas
-            .Include(f => f.Detalles)
             .Where(f => f.UsuarioId == usuarioId)
-            .OrderByDescending(f => f.FechaFactura)
+            .Include(f => f.Detalles)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<Factura>> GetByFechaAsync(DateTime fechaInicio, DateTime fechaFin)
     {
         return await _context.Facturas
-            .Include(f => f.Usuario)
-            .Include(f => f.Detalles)
             .Where(f => f.FechaFactura >= fechaInicio && f.FechaFactura <= fechaFin)
             .OrderByDescending(f => f.FechaFactura)
             .ToListAsync();

@@ -3,6 +3,7 @@ using DogWalk_Domain.Common.Enums;
 using DogWalk_Domain.Common.ValueObjects;
 using DogWalk_Domain.Entities;
 using DogWalk_Domain.Interfaces.IRepositories;
+using DogWalk_Infrastructure.Services.Email;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -15,10 +16,12 @@ namespace DogWalk_API.Controllers
     public class CarritoController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly EmailService _emailService;
 
-        public CarritoController(IUnitOfWork unitOfWork)
+        public CarritoController(IUnitOfWork unitOfWork, EmailService emailService)
         {
             _unitOfWork = unitOfWork;
+            _emailService = emailService;
         }
 
         // Helper para obtener el ID del usuario autenticado
@@ -28,162 +31,149 @@ namespace DogWalk_API.Controllers
         [HttpGet]
         public async Task<ActionResult<CarritoDto>> GetCarrito()
         {
-            var usuario = await _unitOfWork.Usuarios.GetByIdAsync(GetUserId());
-            if (usuario == null) return NotFound("Usuario no encontrado");
-
-            var carritoItems = new List<ItemCarritoDto>();
-
-            foreach (var item in usuario.Carrito)
+            try
             {
-                string nombreItem = "";
-                string imagenUrl = "";
+                var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
+                if (usuario == null) 
+                    return NotFound("Usuario no encontrado");
 
-                // Obtener nombre e imagen según el tipo de ítem
-                if (item.TipoItem == TipoItem.Articulo)
+                var carritoItems = new List<ItemCarritoDto>();
+
+                foreach (var item in usuario.Carrito)
                 {
-                    var articulo = await _unitOfWork.Articulos.GetByIdAsync(item.ItemId);
-                    if (articulo != null)
+                    var articulo = item.Articulo; // Ya debería estar cargado por el Include
+                    if (articulo == null) continue; // Skip si por alguna razón no existe el artículo
+
+                    var imagenUrl = articulo.Imagenes
+                        .FirstOrDefault(i => i.EsPrincipal)?.UrlImagen ?? "";
+
+                    carritoItems.Add(new ItemCarritoDto
                     {
-                        nombreItem = articulo.Nombre;
-                        // Obtener imagen principal si existe
-                        var imagenPrincipal = articulo.Imagenes.FirstOrDefault(i => i.EsPrincipal);
-                        if (imagenPrincipal != null)
-                            imagenUrl = imagenPrincipal.UrlImagen;
-                    }
-                }
-                else if (item.TipoItem == TipoItem.Servicio)
-                {
-                    var servicio = await _unitOfWork.Servicios.GetByIdAsync(item.ItemId);
-                    if (servicio != null)
-                    {
-                        nombreItem = servicio.Nombre;
-                        imagenUrl = ""; // Servicio no tiene imagen directa
-                    }
+                        Id = item.Id,
+                        ArticuloId = item.ArticuloId,
+                        NombreArticulo = articulo.Nombre,
+                        ImagenUrl = imagenUrl,
+                        Cantidad = item.Cantidad,
+                        PrecioUnitario = item.PrecioUnitario.Cantidad,
+                        Subtotal = item.Subtotal.Cantidad
+                    });
                 }
 
-                carritoItems.Add(new ItemCarritoDto
+                return Ok(new CarritoDto
                 {
-                    Id = item.Id,
-                    TipoItem = item.TipoItem.ToString(),
-                    ItemId = item.ItemId,
-                    NombreItem = nombreItem,
-                    ImagenUrl = imagenUrl,
-                    Cantidad = item.Cantidad,
-                    PrecioUnitario = item.PrecioUnitario.Cantidad,
-                    Subtotal = item.Subtotal.Cantidad
+                    UsuarioId = usuario.Id,
+                    Items = carritoItems,
+                    Total = carritoItems.Sum(x => x.Subtotal),
+                    CantidadItems = carritoItems.Sum(x => x.Cantidad)
                 });
             }
-
-            var totalCarrito = carritoItems.Sum(x => x.Subtotal);
-            var cantidadItems = carritoItems.Sum(x => x.Cantidad);
-
-            return Ok(new CarritoDto
+            catch (Exception ex)
             {
-                UsuarioId = usuario.Id,
-                Items = carritoItems,
-                Total = totalCarrito,
-                CantidadItems = cantidadItems
-            });
+                return StatusCode(500, new { error = "Error al obtener el carrito", detalle = ex.Message });
+            }
         }
 
         [HttpPost("agregar")]
-        public async Task<IActionResult> AgregarItem([FromBody] AddItemCarritoDto dto)
+        public async Task<IActionResult> AgregarArticulo([FromBody] AddItemCarritoDto dto)
         {
-            if (dto.Cantidad <= 0)
-                return BadRequest("La cantidad debe ser mayor que cero");
-
-            var usuario = await _unitOfWork.Usuarios.GetByIdAsync(GetUserId());
-            if (usuario == null) return NotFound("Usuario no encontrado");
-
-            // Convertir string a enum
-            TipoItem tipoItem;
-            if (!Enum.TryParse(dto.TipoItem, true, out tipoItem))
-                return BadRequest("Tipo de ítem no válido");
-
-            // Obtener precio según el tipo de ítem
-            Dinero precioUnitario;
-            
-            if (tipoItem == TipoItem.Articulo)
+            try
             {
-                var articulo = await _unitOfWork.Articulos.GetByIdAsync(dto.ItemId);
+                if (dto.Cantidad <= 0)
+                    return BadRequest("La cantidad debe ser mayor que cero");
+
+                await _unitOfWork.BeginTransactionAsync();
+
+                var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
+                if (usuario == null) 
+                    return NotFound("Usuario no encontrado");
+
+                var articulo = await _unitOfWork.Articulos.GetByIdAsync(dto.ArticuloId);
                 if (articulo == null)
                     return NotFound("Artículo no encontrado");
-                    
-                // Verificar stock disponible
+
                 if (articulo.Stock < dto.Cantidad)
                     return BadRequest("No hay suficiente stock disponible");
-                    
-                precioUnitario = articulo.Precio;
+
+                try
+                {
+                    var itemExistente = usuario.Carrito
+                        .FirstOrDefault(i => i.ArticuloId == dto.ArticuloId);
+
+                    if (itemExistente != null)
+                    {
+                        itemExistente.ActualizarCantidad(itemExistente.Cantidad + dto.Cantidad);
+                    }
+                    else
+                    {
+                        var precioUnitario = Dinero.Create(articulo.Precio.Cantidad, articulo.Precio.Moneda);
+                        var nuevoItem = new ItemCarrito(
+                            Guid.NewGuid(),
+                            usuario.Id,
+                            dto.ArticuloId,
+                            dto.Cantidad,
+                            precioUnitario
+                        );
+
+                        await _unitOfWork.AddAsync(nuevoItem);
+                    }
+
+                    await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.CommitTransactionAsync();
+
+                    return Ok(new { mensaje = "Artículo agregado al carrito correctamente" });
+                }
+                catch (Exception)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw;
+                }
             }
-            else // Servicio
+            catch (Exception ex)
             {
-                var servicio = await _unitOfWork.Servicios.GetByIdAsync(dto.ItemId);
-                if (servicio == null)
-                    return NotFound("Servicio no encontrado");
-                    
-                var precios = servicio.Precios.ToList();
-                if (!precios.Any())
-                    return BadRequest("El servicio no tiene precios definidos");
-                
-                // Opción 1: Usar el precio más bajo
-                var precio = precios.OrderBy(p => p.Valor.Cantidad).First();
-                
-                // Alternativa: Opción 2 - Si quieres usar el precio de un paseador específico:
-                // var paseadorId = Guid.Parse("ID-del-paseador"); // Obtener de algún lado
-                // var precio = precios.FirstOrDefault(p => p.PaseadorId == paseadorId);
-                // if (precio == null)
-                //     return BadRequest("No hay precio definido para este paseador");
-                
-                precioUnitario = precio.Valor;
+                return StatusCode(500, new { error = "Error al agregar al carrito", detalle = ex.Message });
             }
-
-            // Crear ítem del carrito
-            var item = new ItemCarrito(
-                Guid.NewGuid(),
-                usuario.Id,
-                tipoItem,
-                dto.ItemId,
-                dto.Cantidad,
-                precioUnitario
-            );
-
-            // Agregar al carrito del usuario
-            usuario.AgregarItemCarrito(item);
-            await _unitOfWork.SaveChangesAsync();
-
-            return Ok(new { mensaje = "Ítem agregado al carrito correctamente" });
         }
 
         [HttpPut("actualizar")]
         public async Task<IActionResult> ActualizarCantidad([FromBody] UpdateItemCarritoDto dto)
         {
-            if (dto.Cantidad <= 0)
-                return BadRequest("La cantidad debe ser mayor que cero");
-
-            var usuario = await _unitOfWork.Usuarios.GetByIdAsync(GetUserId());
-            if (usuario == null) return NotFound("Usuario no encontrado");
-
-            var item = usuario.ObtenerItemCarrito(dto.ItemCarritoId);
-            if (item == null)
-                return NotFound("Ítem no encontrado en el carrito");
-
-            // Si es un artículo, verificar stock
-            if (item.TipoItem == TipoItem.Articulo)
-            {
-                var articulo = await _unitOfWork.Articulos.GetByIdAsync(item.ItemId);
-                if (articulo != null && articulo.Stock < dto.Cantidad)
-                    return BadRequest("No hay suficiente stock disponible");
-            }
-
             try
             {
-                usuario.ActualizarCantidadItemCarrito(dto.ItemCarritoId, dto.Cantidad);
-                await _unitOfWork.SaveChangesAsync();
-                return Ok(new { mensaje = "Cantidad actualizada correctamente" });
+                if (dto.Cantidad <= 0)
+                    return BadRequest("La cantidad debe ser mayor que cero");
+
+                await _unitOfWork.BeginTransactionAsync();
+
+                var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
+                if (usuario == null) 
+                    return NotFound("Usuario no encontrado");
+
+                var itemCarrito = usuario.Carrito.FirstOrDefault(i => i.Id == dto.ItemCarritoId);
+                if (itemCarrito == null)
+                    return NotFound("Item no encontrado en el carrito");
+
+                // Verificar stock disponible
+                var articulo = itemCarrito.Articulo;
+                if (articulo != null && articulo.Stock < dto.Cantidad)
+                    return BadRequest("No hay suficiente stock disponible");
+
+                try
+                {
+                    itemCarrito.ActualizarCantidad(dto.Cantidad);
+                    await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.CommitTransactionAsync();
+
+                    return Ok(new { mensaje = "Cantidad actualizada correctamente" });
+                }
+                catch (Exception)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw;
+                }
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, new { error = "Error al actualizar cantidad", detalle = ex.Message });
             }
         }
 
@@ -196,7 +186,7 @@ namespace DogWalk_API.Controllers
             usuario.EliminarItemCarrito(itemCarritoId);
             await _unitOfWork.SaveChangesAsync();
 
-            return Ok(new { mensaje = "Ítem eliminado del carrito" });
+            return Ok(new { mensaje = "Artículo eliminado del carrito" });
         }
 
         [HttpPost("vaciar")]

@@ -26,9 +26,15 @@ namespace DogWalk_Infrastructure.Persistence
         private IOpinionPerroRepository _opinionPerroRepository;
         private IRankingPaseadorRepository _rankingPaseadorRepository;
         
-        public UnitOfWork(DogWalkDbContext context)
+        public UnitOfWork(
+            DogWalkDbContext context,
+            IUsuarioRepository usuarios,
+            IArticuloRepository articulos
+        )
         {
             _context = context;
+            _usuarioRepository = usuarios;
+            _articuloRepository = articulos;
         }
         
         public IUsuarioRepository Usuarios => _usuarioRepository ??= new UsuarioRepository(_context);
@@ -43,10 +49,7 @@ namespace DogWalk_Infrastructure.Persistence
         public IOpinionPerroRepository OpinionesPerros => _opinionPerroRepository ??= new OpinionPerroRepository(_context);
         public IRankingPaseadorRepository RankingPaseadores => _rankingPaseadorRepository ??= new RankingPaseadorRepository(_context);
         
-        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            return await _context.SaveChangesAsync(cancellationToken);
-        }
+        public DogWalkDbContext Context => _context;
         
         public async Task BeginTransactionAsync()
         {
@@ -57,12 +60,15 @@ namespace DogWalk_Infrastructure.Persistence
         {
             try
             {
-                await _transaction.CommitAsync();
+                await _transaction?.CommitAsync();
             }
             finally
             {
-                await _transaction.DisposeAsync();
-                _transaction = null;
+                if (_transaction != null)
+                {
+                    await _transaction.DisposeAsync();
+                    _transaction = null;
+                }
             }
         }
         
@@ -70,13 +76,27 @@ namespace DogWalk_Infrastructure.Persistence
         {
             try
             {
-                await _transaction.RollbackAsync();
+                await _transaction?.RollbackAsync();
             }
             finally
             {
-                await _transaction.DisposeAsync();
-                _transaction = null;
+                if (_transaction != null)
+                {
+                    await _transaction.DisposeAsync();
+                    _transaction = null;
+                }
             }
+        }
+        
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.SaveChangesAsync(cancellationToken);
+        }
+        
+        public async Task<T> AddAsync<T>(T entity) where T : class
+        {
+            await _context.Set<T>().AddAsync(entity);
+            return entity;
         }
         
         public void Dispose()

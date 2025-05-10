@@ -57,4 +57,12 @@ public class ArticuloRepository : GenericRepository<Articulo>, IArticuloReposito
                         a.Descripcion.Contains(terminoBusqueda))
             .ToListAsync();
     }
+
+    public async Task<List<Articulo>> GetArticulosByIds(List<Guid> ids)
+    {
+        return await _context.Articulos
+            .Include(a => a.Imagenes)
+            .Where(a => ids.Contains(a.Id))
+            .ToListAsync();
+    }
 }

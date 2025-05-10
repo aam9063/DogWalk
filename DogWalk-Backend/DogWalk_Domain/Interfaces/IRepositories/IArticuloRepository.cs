@@ -8,4 +8,5 @@ public interface IArticuloRepository : IRepository<Articulo>
     {
         Task<IEnumerable<Articulo>> GetByCategoriaAsync(CategoriaArticulo categoria);
         Task<IEnumerable<Articulo>> GetByDisponibilidadAsync(bool disponible = true);
+        Task<List<Articulo>> GetArticulosByIds(List<Guid> ids);
     }

@@ -1,6 +1,7 @@
 using DogWalk_Domain.Common.ValueObjects;
 using DogWalk_Domain.Entities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Stripe;
 using Stripe.Checkout;
 using System;
@@ -14,11 +15,13 @@ public class StripeService
 {
     private readonly string _apiKey;
     private readonly string _webhookSecret;
+    private readonly ILogger<StripeService> _logger;
 
-    public StripeService(IConfiguration configuration)
+    public StripeService(IConfiguration configuration, ILogger<StripeService> logger)
     {
-        _apiKey = configuration["Stripe:SecretKey"];
-        _webhookSecret = configuration["Stripe:WebhookSecret"];
+        _apiKey = configuration["Stripe:SecretKey"] ?? throw new ArgumentNullException("Stripe:SecretKey no está configurado");
+        _webhookSecret = configuration["Stripe:WebhookSecret"] ?? throw new ArgumentNullException("Stripe:WebhookSecret no está configurado");
+        _logger = logger;
         StripeConfiguration.ApiKey = _apiKey;
     }
     
@@ -31,62 +34,56 @@ public class StripeService
     /// <returns>URL de la sesión de pago de Stripe</returns>
     public async Task<string> CreateCheckoutSession(Factura factura, string successUrl, string cancelUrl)
     {
-        var options = new SessionCreateOptions
+        try
         {
-            PaymentMethodTypes = new List<string> { "card" },
-            LineItems = new List<SessionLineItemOptions>(),
-            Mode = "payment",
-            SuccessUrl = successUrl,
-            CancelUrl = cancelUrl,
-            Metadata = new Dictionary<string, string>
-            {
-                { "FacturaId", factura.Id.ToString() }
-            }
-        };
+            _logger.LogInformation($"Creando sesión de checkout para factura {factura.Id}");
 
-        // Agregar items a la sesión de Stripe
-        foreach (var detalle in factura.Detalles)
-        {
-            var articulo = detalle.Articulo; // Asumiendo que está cargado por EF Core
-            if (articulo == null)
+            var options = new SessionCreateOptions
             {
-                throw new InvalidOperationException($"No se pudo cargar el artículo para el detalle {detalle.Id}");
-            }
-            
-            var lineItem = new SessionLineItemOptions
-            {
-                PriceData = new SessionLineItemPriceDataOptions
+                PaymentMethodTypes = new List<string> { "card" },
+                LineItems = new List<SessionLineItemOptions>(),
+                Mode = "payment",
+                SuccessUrl = successUrl,
+                CancelUrl = cancelUrl,
+                Metadata = new Dictionary<string, string>
                 {
-                    Currency = detalle.PrecioUnitario.Moneda.ToLower(),
-                    UnitAmount = (long)(detalle.PrecioUnitario.Cantidad * 100), // Stripe usa centavos
-                    ProductData = new SessionLineItemPriceDataProductDataOptions
-                    {
-                        Name = articulo.Nombre ?? "Producto sin nombre",
-                        Description = articulo.Descripcion ?? "Sin descripción"
-                    }
-                },
-                Quantity = detalle.Cantidad
+                    { "FacturaId", factura.Id.ToString() }
+                }
             };
 
-            // Agregar imágenes solo si existen
-            if (articulo.Imagenes != null && articulo.Imagenes.Any())
+            foreach (var detalle in factura.Detalles)
             {
-                var imagenPrincipal = articulo.Imagenes
-                    .FirstOrDefault(i => i.EsPrincipal)?.UrlImagen;
-                    
-                if (!string.IsNullOrEmpty(imagenPrincipal))
+                _logger.LogInformation($"Procesando detalle {detalle.Id} para artículo {detalle.ArticuloId}");
+
+                var lineItem = new SessionLineItemOptions
                 {
-                    lineItem.PriceData.ProductData.Images = new List<string> { imagenPrincipal };
-                }
+                    PriceData = new SessionLineItemPriceDataOptions
+                    {
+                        Currency = "eur", // o detalle.PrecioUnitario.Moneda.ToLower()
+                        UnitAmount = (long)(detalle.PrecioUnitario.Cantidad * 100),
+                        ProductData = new SessionLineItemPriceDataProductDataOptions
+                        {
+                            Name = detalle.Articulo?.Nombre ?? "Producto",
+                            Description = detalle.Articulo?.Descripcion ?? "Sin descripción"
+                        }
+                    },
+                    Quantity = detalle.Cantidad
+                };
+
+                options.LineItems.Add(lineItem);
             }
 
-            options.LineItems.Add(lineItem);
+            var service = new SessionService();
+            var session = await service.CreateAsync(options);
+            
+            _logger.LogInformation($"Sesión de checkout creada exitosamente: {session.Id}");
+            return session.Url;
         }
-
-        var service = new SessionService();
-        var session = await service.CreateAsync(options);
-        
-        return session.Url;
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear sesión de checkout");
+            throw;
+        }
     }
     
     /// <summary>

@@ -20,13 +20,13 @@ public class CheckoutController : ControllerBase
     private readonly ILogger<CheckoutController> _logger;
 
     public CheckoutController(
-        IUnitOfWork unitOfWork, 
+        IUnitOfWork unitOfWork,
         StripeService stripeService,
         ILogger<CheckoutController> logger)
     {
-        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-        _stripeService = stripeService ?? throw new ArgumentNullException(nameof(stripeService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _unitOfWork = unitOfWork;
+        _stripeService = stripeService;
+        _logger = logger;
     }
 
     [HttpPost]
@@ -35,6 +35,7 @@ public class CheckoutController : ControllerBase
     {
         try
         {
+            // 1. Obtener usuario y carrito
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(userId);
             
@@ -44,59 +45,93 @@ public class CheckoutController : ControllerBase
             if (!usuario.Carrito.Any())
                 return BadRequest("El carrito está vacío");
 
-            // Crear la factura
-            var factura = new Factura(
-                Guid.NewGuid(),
-                usuario.Id,
-                MetodoPago.Stripe
-            );
+            // 2. Crear la factura
+            var factura = new Factura(Guid.NewGuid(), usuario.Id, MetodoPago.Stripe);
 
-            // Agregar los detalles de la factura
+            // 3. Procesar cada item del carrito y mantener una referencia a los artículos
+            var articulosDict = new Dictionary<Guid, Articulo>();
+
             foreach (var item in usuario.Carrito)
             {
                 var articulo = await _unitOfWork.Articulos.GetByIdAsync(item.ArticuloId);
                 if (articulo == null)
-                    return BadRequest($"Artículo no encontrado: {item.ArticuloId}");
+                {
+                    _logger.LogError($"Artículo no encontrado: {item.ArticuloId}");
+                    return BadRequest($"Artículo no encontrado en el carrito");
+                }
 
-                if (!articulo.ReducirStock(item.Cantidad))
-                    return BadRequest($"No hay suficiente stock para {articulo.Nombre}");
+                if (articulo.Stock < item.Cantidad)
+                {
+                    return BadRequest($"Stock insuficiente para {articulo.Nombre}");
+                }
+
+                // Guardar el artículo en el diccionario
+                articulosDict[articulo.Id] = articulo;
 
                 var detalle = new DetalleFactura(
                     Guid.NewGuid(),
                     factura.Id,
-                    item.ArticuloId,
+                    articulo.Id,
                     item.Cantidad,
                     item.PrecioUnitario
                 );
-                
+
                 factura.AgregarDetalle(detalle);
+                articulo.ReducirStock(item.Cantidad);
             }
 
-            // Crear sesión de Stripe
-            var successUrl = "http://localhost:5173/checkout/success?session_id={CHECKOUT_SESSION_ID}";
-            var cancelUrl = "http://localhost:5173/checkout/cancel";
-            
-            var stripeSessionUrl = await _stripeService.CreateCheckoutSession(
-                factura,
-                successUrl,
-                cancelUrl
-            );
-
-            // Guardar la factura
-            await _unitOfWork.Facturas.AddAsync(factura);
-
-            // Vaciar el carrito
-            usuario.VaciarCarrito();
-            
-            // Guardar todos los cambios
-            await _unitOfWork.SaveChangesAsync();
-
-            return Ok(new CheckoutResponseDto
+            try
             {
-                Success = true,
-                RedirectUrl = stripeSessionUrl,
-                FacturaId = factura.Id
-            });
+                var successUrl = "http://localhost:5173/checkout/success?session_id={CHECKOUT_SESSION_ID}";
+                var cancelUrl = "http://localhost:5173/checkout/cancel";
+
+                // Crear una factura temporal con los artículos para Stripe
+                var facturaParaStripe = new Factura(factura.Id, factura.UsuarioId, factura.MetodoPago);
+                foreach (var detalle in factura.Detalles)
+                {
+                    var detalleConArticulo = new DetalleFactura(
+                        detalle.Id,
+                        facturaParaStripe.Id,
+                        detalle.ArticuloId,
+                        detalle.Cantidad,
+                        detalle.PrecioUnitario
+                    );
+                    // Asignar el artículo desde nuestro diccionario
+                    detalleConArticulo.GetType().GetProperty("Articulo")?.SetValue(detalleConArticulo, articulosDict[detalle.ArticuloId]);
+                    facturaParaStripe.AgregarDetalle(detalleConArticulo);
+                }
+
+                var stripeSessionUrl = await _stripeService.CreateCheckoutSession(
+                    facturaParaStripe,
+                    successUrl,
+                    cancelUrl
+                );
+
+                // Guardar la factura original
+                await _unitOfWork.Facturas.AddAsync(factura);
+                
+                // Vaciar el carrito
+                usuario.VaciarCarrito();
+                
+                // Guardar todos los cambios
+                await _unitOfWork.SaveChangesAsync();
+
+                return Ok(new CheckoutResponseDto
+                {
+                    Success = true,
+                    RedirectUrl = stripeSessionUrl,
+                    FacturaId = factura.Id
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al procesar el pago con Stripe");
+                return BadRequest(new CheckoutResponseDto
+                {
+                    Success = false,
+                    ErrorMessage = $"Error al procesar el pago: {ex.Message}"
+                });
+            }
         }
         catch (Exception ex)
         {

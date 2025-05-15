@@ -156,21 +156,21 @@ namespace DogWalk_API.Controllers
             {
                 var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
                 var paseador = await _unitOfWork.Paseadores.GetByIdAsync(userId);
-                
+
                 if (paseador == null)
                 {
                     return NotFound(new { message = "Perfil de paseador no encontrado" });
                 }
-                
+
                 var usuario = await _unitOfWork.Usuarios.GetByIdAsync(userId);
-                
+
                 // Obtener valoración promedio (llamar el método directamente)
                 double valoracionPromedio = await _unitOfWork.RankingPaseadores.GetPromedioPaseadorAsync(userId);
-                
+
                 // Obtener las valoraciones y contarlas después
                 var valoraciones = await _unitOfWork.RankingPaseadores.GetByPaseadorIdAsync(userId);
                 int cantidadValoraciones = valoraciones.Count();
-                
+
                 var result = new
                 {
                     Id = paseador.Id,
@@ -199,12 +199,146 @@ namespace DogWalk_API.Controllers
                         Precio = p.Valor.Cantidad
                     }).ToList()
                 };
-                
+
                 return Ok(result);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Error al obtener perfil: {ex.Message}" });
+            }
+        }
+
+        // Primer endpoint para el perfil público (el que acabamos de crear)
+        [HttpGet("public/{id}")]  // Cambiamos la ruta
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPaseadorPublicProfile(Guid id)
+        {
+            try
+            {
+                var paseador = await _unitOfWork.Paseadores.GetByIdAsync(id);
+
+                if (paseador == null)
+                {
+                    return NotFound(new { message = "Paseador no encontrado" });
+                }
+
+                // Obtener valoración promedio
+                double valoracionPromedio = await _unitOfWork.RankingPaseadores.GetPromedioPaseadorAsync(id);
+
+                // Obtener las valoraciones
+                var valoraciones = await _unitOfWork.RankingPaseadores.GetByPaseadorIdAsync(id);
+                int cantidadValoraciones = valoraciones.Count();
+
+                // Crear el DTO con la información pública del paseador
+                var result = new
+                {
+                    Id = paseador.Id,
+                    Nombre = paseador.Nombre,
+                    Apellido = paseador.Apellido,
+                    FotoPerfil = paseador.FotoPerfil,
+                    Coordenadas = new
+                    {
+                        Latitud = paseador.Ubicacion.Latitud,
+                        Longitud = paseador.Ubicacion.Longitud
+                    },
+                    RadioServicio = 5.0, // O el valor que corresponda
+                    ValoracionPromedio = valoracionPromedio,
+                    CantidadValoraciones = cantidadValoraciones,
+                    Servicios = paseador.Precios.Select(p => new
+                    {
+                        Id = p.ServicioId,
+                        Nombre = p.Servicio.Nombre,
+                        Descripcion = p.Servicio.Descripcion,
+                        Tipo = p.Servicio.Tipo.ToString(),
+                        Precio = p.Valor.Cantidad
+                    }).ToList(),
+                    // Incluir las últimas valoraciones
+                    UltimasValoraciones = valoraciones.OrderByDescending(v => v.CreadoEn)
+                        .Take(5) // Limitamos a las últimas 5 valoraciones
+                        .Select(v => new
+                        {
+                            Puntuacion = v.Valoracion.Puntuacion,
+                            Comentario = v.Comentario,
+                            Fecha = v.CreadoEn,
+                            Usuario = new
+                            {
+                                Nombre = v.Usuario.Nombre,
+                                Apellido = v.Usuario.Apellido,
+                                FotoPerfil = v.Usuario.FotoPerfil
+                            }
+                        }).ToList()
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener perfil del paseador: {ex.Message}" });
+            }
+        }
+
+        // Segundo endpoint para detalles (el que ya existía)
+        [HttpGet("details/{id}")]  // Cambiamos la ruta
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPaseadorDetails(Guid id)
+        {
+            try
+            {
+                var paseador = await _unitOfWork.Paseadores.GetByIdAsync(id);
+                if (paseador == null)
+                {
+                    return NotFound(new { message = "Paseador no encontrado" });
+                }
+
+                // Obtener valoraciones
+                var valoraciones = await _unitOfWork.RankingPaseadores.GetByPaseadorIdAsync(id);
+
+                // Reservas (nota: adaptado al modelo que te falta)
+                // Esto implementa una versión simplificada
+
+                // Crear DTO con los detalles usando tu PaseadorDetailsDto existente
+                var paseadorDto = new PaseadorDetailsDto
+                {
+                    Id = paseador.Id,
+                    Nombre = paseador.Nombre,
+                    Apellido = paseador.Apellido,
+                    Email = paseador.Email.ToString(),
+                    Telefono = paseador.Telefono?.ToString(),
+                    FotoPerfil = paseador.FotoPerfil,
+                    ValoracionGeneral = paseador.ValoracionGeneral,
+                    Latitud = paseador.Ubicacion.Latitud,
+                    Longitud = paseador.Ubicacion.Longitud,
+
+                    // Mapeo de servicios y precios
+                    Servicios = paseador.Precios.Select(p => new ServicioPrecioDto
+                    {
+                        ServicioId = p.ServicioId,
+                        Precio = p.Valor.Cantidad
+                    }).ToList(),
+
+                    // Mapeo de valoraciones (adaptado a tu modelo)
+                    Valoraciones = valoraciones.Select(v => new ValoracionDto
+                    {
+                        Id = v.Id,
+                        UsuarioId = v.UsuarioId,
+                        NombreUsuario = $"{v.Usuario.Nombre} {v.Usuario.Apellido}",
+                        FotoUsuario = v.Usuario.FotoPerfil,
+                        Puntuacion = v.Valoracion.Puntuacion,
+                        // Nota: Valoracion parece no tener un campo Comentario en tu modelo, 
+                        // agregándolo vacío para que compile
+                        Comentario = "",
+                        Fecha = v.CreadoEn
+                    }).ToList(),
+
+                    // Implementación simplificada para ReservasProximas
+                    ReservasProximas = new List<ReservaDto>()
+                };
+
+                return Ok(paseadorDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener detalles del paseador: {ex.Message}" });
             }
         }
 
@@ -216,7 +350,7 @@ namespace DogWalk_API.Controllers
             try
             {
                 var paseadorId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-                
+
                 var paseador = await _unitOfWork.Paseadores.GetByIdAsync(paseadorId);
                 if (paseador == null)
                 {
@@ -250,12 +384,12 @@ namespace DogWalk_API.Controllers
             {
                 var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
                 var paseador = await _unitOfWork.Paseadores.GetByIdAsync(userId);
-                
+
                 if (paseador == null)
                 {
                     return NotFound(new { message = "Paseador no encontrado" });
                 }
-                
+
                 foreach (var precioDto in precios)
                 {
                     // Verificar que el servicio existe
@@ -264,10 +398,10 @@ namespace DogWalk_API.Controllers
                     {
                         return BadRequest(new { message = $"Servicio con ID {precioDto.ServicioId} no encontrado" });
                     }
-                    
+
                     // Buscar si ya existe un precio para este servicio
                     var precioExistente = paseador.Precios.FirstOrDefault(p => p.ServicioId == precioDto.ServicioId);
-                    
+
                     if (precioExistente != null)
                     {
                         // Actualizar precio existente
@@ -282,14 +416,14 @@ namespace DogWalk_API.Controllers
                             precioDto.ServicioId,
                             Dinero.Create(precioDto.Precio)
                         );
-                        
+
                         // Asegúrate de que este método exista o implementa la lógica adecuada aquí
                         paseador.AgregarPrecio(nuevoPrecio);
                     }
                 }
-                
+
                 await _unitOfWork.SaveChangesAsync();
-                
+
                 return Ok(new { message = "Precios actualizados correctamente" });
             }
             catch (Exception ex)
@@ -306,27 +440,27 @@ namespace DogWalk_API.Controllers
             try
             {
                 var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-                
+
                 // Verificar que el paseador existe
                 var paseador = await _unitOfWork.Paseadores.GetByIdAsync(userId);
                 if (paseador == null)
                 {
                     return NotFound(new { message = "Paseador no encontrado" });
                 }
-                
+
                 // Verificar que el servicio existe
                 var servicio = await _unitOfWork.Servicios.GetByIdAsync(dto.ServicioId);
                 if (servicio == null)
                 {
                     return NotFound(new { message = "Servicio no encontrado" });
                 }
-                
+
                 // Verificar si ya existe un precio para este servicio
                 if (paseador.Precios.Any(p => p.ServicioId == dto.ServicioId))
                 {
                     return BadRequest(new { message = "Ya existe un precio para este servicio. Use PUT para actualizar." });
                 }
-                
+
                 // Crear nuevo precio
                 var nuevoPrecio = new Precio(
                     Guid.NewGuid(),
@@ -334,14 +468,15 @@ namespace DogWalk_API.Controllers
                     dto.ServicioId,
                     Dinero.Create(dto.Precio)
                 );
-                
+
                 // Agregar el precio al paseador
                 paseador.AgregarPrecio(nuevoPrecio);
-                
+
                 // Guardar cambios
                 await _unitOfWork.SaveChangesAsync();
-                
-                return Ok(new { 
+
+                return Ok(new
+                {
                     Id = nuevoPrecio.Id,
                     PaseadorId = nuevoPrecio.PaseadorId,
                     ServicioId = nuevoPrecio.ServicioId,
@@ -362,7 +497,7 @@ namespace DogWalk_API.Controllers
             try
             {
                 var paseadorId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-                
+
                 var paseador = await _unitOfWork.Paseadores.GetByIdAsync(paseadorId);
                 if (paseador == null)
                 {
@@ -370,7 +505,7 @@ namespace DogWalk_API.Controllers
                 }
 
                 var disponibilidadesCreadas = new List<DisponibilidadHorariaDto>();
-                
+
                 // Crear slots de disponibilidad según el rango e intervalo
                 DateTime currentTime = disponibilidadDto.FechaHoraInicio;
                 while (currentTime < disponibilidadDto.FechaHoraFin)
@@ -381,10 +516,10 @@ namespace DogWalk_API.Controllers
                         currentTime,
                         EstadoDisponibilidad.Disponible
                     );
-                    
+
                     // Agregar a la colección del paseador
                     paseador.AgregarDisponibilidad(disponibilidad);
-                    
+
                     disponibilidadesCreadas.Add(new DisponibilidadHorariaDto
                     {
                         Id = disponibilidad.Id,
@@ -392,14 +527,15 @@ namespace DogWalk_API.Controllers
                         FechaHora = currentTime,
                         Estado = "Disponible"
                     });
-                    
+
                     currentTime = currentTime.AddMinutes(disponibilidadDto.IntervaloMinutos);
                 }
 
                 await _unitOfWork.SaveChangesAsync();
 
-                return Ok(new { 
-                    message = "Disponibilidad creada correctamente", 
+                return Ok(new
+                {
+                    message = "Disponibilidad creada correctamente",
                     disponibilidades = disponibilidadesCreadas
                 });
             }
@@ -448,71 +584,6 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Detalles de un paseador específico (público)
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetPaseadorDetails(Guid id)
-        {
-            try
-            {
-                var paseador = await _unitOfWork.Paseadores.GetByIdAsync(id);
-                if (paseador == null)
-                {
-                    return NotFound(new { message = "Paseador no encontrado" });
-                }
-
-                // Obtener valoraciones
-                var valoraciones = await _unitOfWork.RankingPaseadores.GetByPaseadorIdAsync(id);
-                
-                // Reservas (nota: adaptado al modelo que te falta)
-                // Esto implementa una versión simplificada
-                
-                // Crear DTO con los detalles usando tu PaseadorDetailsDto existente
-                var paseadorDto = new PaseadorDetailsDto
-                {
-                    Id = paseador.Id,
-                    Nombre = paseador.Nombre,
-                    Apellido = paseador.Apellido,
-                    Email = paseador.Email.ToString(),
-                    Telefono = paseador.Telefono?.ToString(),
-                    FotoPerfil = paseador.FotoPerfil,
-                    ValoracionGeneral = paseador.ValoracionGeneral,
-                    Latitud = paseador.Ubicacion.Latitud,
-                    Longitud = paseador.Ubicacion.Longitud,
-                    
-                    // Mapeo de servicios y precios
-                    Servicios = paseador.Precios.Select(p => new ServicioPrecioDto
-                    {
-                        ServicioId = p.ServicioId,
-                        Precio = p.Valor.Cantidad
-                    }).ToList(),
-                    
-                    // Mapeo de valoraciones (adaptado a tu modelo)
-                    Valoraciones = valoraciones.Select(v => new ValoracionDto
-                    {
-                        Id = v.Id,
-                        UsuarioId = v.UsuarioId,
-                        NombreUsuario = $"{v.Usuario.Nombre} {v.Usuario.Apellido}",
-                        FotoUsuario = v.Usuario.FotoPerfil,
-                        Puntuacion = v.Valoracion.Puntuacion,
-                        // Nota: Valoracion parece no tener un campo Comentario en tu modelo, 
-                        // agregándolo vacío para que compile
-                        Comentario = "", 
-                        Fecha = v.CreadoEn
-                    }).ToList(),
-                    
-                    // Implementación simplificada para ReservasProximas
-                    ReservasProximas = new List<ReservaDto>()
-                };
-
-                return Ok(paseadorDto);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = $"Error al obtener detalles del paseador: {ex.Message}" });
-            }
-        }
-        
         // Obtener reservas del paseador (protegido)
         [HttpGet("reservas")]
         [Authorize(Roles = "Paseador")]
@@ -521,12 +592,12 @@ namespace DogWalk_API.Controllers
             try
             {
                 var paseadorId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-                
+
                 var reservas = await _unitOfWork.Reservas.GetByPaseadorIdAsync(paseadorId);
-                
+
                 // Implementación simplificada para la lista de reservas
                 var reservasDto = new List<ReservaDto>();
-                
+
                 foreach (var reserva in reservas)
                 {
                     // Aquí debe ir el mapeo de reserva a ReservaDto según tu modelo
@@ -536,7 +607,7 @@ namespace DogWalk_API.Controllers
                         // Completa con las propiedades específicas de tu ReservaDto
                     });
                 }
-                
+
                 return Ok(reservasDto);
             }
             catch (Exception ex)
@@ -577,7 +648,7 @@ namespace DogWalk_API.Controllers
                     Pagina = pagina,
                     ElementosPorPagina = elementosPorPagina
                 };
-                
+
                 var resultado = await _mediator.Send(query);
                 return Ok(resultado);
             }

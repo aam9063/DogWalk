@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace DogWalk_API.Controllers
 {
@@ -114,26 +115,39 @@ namespace DogWalk_API.Controllers
 
         // POST: api/RankingPaseador
         [HttpPost]
-        [Authorize] // Solo usuarios autenticados pueden valorar
+        [Authorize]
         public async Task<ActionResult> CrearValoracion(CrearRankingPaseadorDto dto)
         {
             try
             {
+                var logger = HttpContext.RequestServices.GetRequiredService<ILogger<RankingPaseadorController>>();
+                
+                // Cambiar el claim que buscamos
+                var usuarioIdClaim = User.Claims.FirstOrDefault(c => 
+                    c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+                    
+                if (string.IsNullOrEmpty(usuarioIdClaim))
+                {
+                    logger.LogError("No se encontró el claim de identificación del usuario");
+                    return Unauthorized(new { message = "No se pudo identificar al usuario" });
+                }
+
+                if (!Guid.TryParse(usuarioIdClaim, out Guid usuarioId))
+                {
+                    logger.LogError("El ID del usuario no es un GUID válido: {UsuarioIdClaim}", usuarioIdClaim);
+                    return Unauthorized(new { message = "Token inválido: formato de ID incorrecto" });
+                }
+
                 // Validar puntuación
                 if (dto.Puntuacion < 1 || dto.Puntuacion > 5)
                     return BadRequest(new { message = "La puntuación debe estar entre 1 y 5" });
-
-                // Obtener el ID del usuario desde el token
-                var usuarioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-                if (string.IsNullOrEmpty(usuarioIdClaim) || !Guid.TryParse(usuarioIdClaim, out Guid usuarioId))
-                    return Unauthorized(new { message = "No se pudo identificar al usuario" });
 
                 // Verificar que el paseador existe
                 var paseador = await _unitOfWork.Paseadores.GetByIdAsync(dto.PaseadorId);
                 if (paseador == null)
                     return NotFound(new { message = "Paseador no encontrado" });
 
-                // Verificar que el usuario tiene derecho a valorar (ha tenido una reserva con este paseador)
+                // Verificar que el usuario tiene derecho a valorar
                 var reservas = await _unitOfWork.Reservas.GetByUsuarioIdAsync(usuarioId);
                 var tieneReservaCompletada = reservas.Any(r => 
                     r.PaseadorId == dto.PaseadorId && 
@@ -142,48 +156,40 @@ namespace DogWalk_API.Controllers
                 if (!tieneReservaCompletada)
                     return BadRequest(new { message = "Solo puedes valorar a paseadores con los que hayas completado una reserva" });
 
-                // Verificar si ya existe una valoración previa de este usuario para este paseador
+                // Verificar si ya existe una valoración previa
                 var valoracionExistente = await _unitOfWork.RankingPaseadores.GetByUsuarioYPaseadorAsync(usuarioId, dto.PaseadorId);
                 
                 if (valoracionExistente != null)
                 {
-                    // El método espera el objeto completo, no solo el ID
                     await _unitOfWork.RankingPaseadores.DeleteAsync(valoracionExistente);
                     await _unitOfWork.SaveChangesAsync();
                 }
 
-                // Intentamos utilizar Factory Methods o static builders si es posible
-                try 
-                {
-                    // Usar reflection si es necesario, o un método de factory si existe
-                    var valoracion = typeof(RankingPaseador).GetMethod("Create", 
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-                        ?.Invoke(null, new object[] { usuarioId, dto.PaseadorId, dto.Puntuacion, dto.Comentario }) as RankingPaseador;
+                // Primero, necesitamos crear el objeto Valoracion usando el método factory
+                var valoracion = Valoracion.Create(dto.Puntuacion);
 
-                    if (valoracion != null)
-                    {
-                        await _unitOfWork.RankingPaseadores.AddAsync(valoracion);
-                        await _unitOfWork.SaveChangesAsync();
-                        
-                        // Actualizar valoración promedio del paseador
-                        paseador.ActualizarValoracion();
-                        await _unitOfWork.SaveChangesAsync();
-                        
-                        return Ok(new { message = "Valoración guardada con éxito" });
-                    }
-                } 
-                catch 
-                {
-                    // Si falla el método de factory, intentamos otro enfoque
-                }
+                // Luego crear el RankingPaseador con los tipos correctos
+                var rankingPaseador = new RankingPaseador(
+                    Guid.NewGuid(),  // Id
+                    usuarioId,       // UsuarioId
+                    dto.PaseadorId,  // PaseadorId
+                    valoracion,      // Valoracion (Value Object)
+                    dto.Comentario   // Comentario
+                );
 
-                // Alternativa: Si no hay factory method, intentamos construir de otra manera
-                // Esto dependerá de cómo esté implementada tu entidad RankingPaseador
+                await _unitOfWork.RankingPaseadores.AddAsync(rankingPaseador);
+                await _unitOfWork.SaveChangesAsync();
                 
-                return BadRequest(new { message = "No se pudo crear la valoración. Por favor, contacta al administrador." });
+                // Actualizar valoración promedio del paseador
+                paseador.ActualizarValoracion();
+                await _unitOfWork.SaveChangesAsync();
+                
+                return Ok(new { message = "Valoración guardada con éxito" });
             }
             catch (Exception ex)
             {
+                var logger = HttpContext.RequestServices.GetRequiredService<ILogger<RankingPaseadorController>>();
+                logger.LogError(ex, "Error al crear valoración");
                 return StatusCode(500, new { message = $"Error al crear valoración: {ex.Message}" });
             }
         }

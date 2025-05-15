@@ -17,6 +17,7 @@ using DogWalk_Infrastructure.Authentication;
 using DogWalk_API.Hubs;
 using DogWalk_Infrastructure.Services.Stripe;
 using DogWalk_Infrastructure;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,7 +96,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidAudience = jwtSettings["Audience"],
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        NameClaimType = ClaimTypes.NameIdentifier
     };
 });
 
@@ -141,6 +143,23 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     // Inicialización de datos si es necesario
 }
+
+// En Program.cs, después de app.UseRouting()
+app.Use(async (context, next) =>
+{
+    // Seguridad adicional para prevenir ataques
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    if (!builder.Environment.IsDevelopment())
+    {
+        context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+
+    await next();
+});
+
 
 app.UseHttpsRedirection();
 

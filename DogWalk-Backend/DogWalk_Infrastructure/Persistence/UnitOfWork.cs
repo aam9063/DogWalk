@@ -25,16 +25,19 @@ namespace DogWalk_Infrastructure.Persistence
         private IDisponibilidadHorariaRepository _disponibilidadHorariaRepository;
         private IOpinionPerroRepository _opinionPerroRepository;
         private IRankingPaseadorRepository _rankingPaseadorRepository;
-        
+        private IRefreshTokenRepository _refreshTokenRepository;
+
         public UnitOfWork(
             DogWalkDbContext context,
             IUsuarioRepository usuarios,
-            IArticuloRepository articulos
+            IArticuloRepository articulos,
+            IRefreshTokenRepository refreshTokenRepository
         )
         {
             _context = context;
             _usuarioRepository = usuarios;
             _articuloRepository = articulos;
+            _refreshTokenRepository = refreshTokenRepository;
         }
         
         public IUsuarioRepository Usuarios => _usuarioRepository ??= new UsuarioRepository(_context);
@@ -48,7 +51,8 @@ namespace DogWalk_Infrastructure.Persistence
         public IDisponibilidadHorariaRepository DisponibilidadHoraria => _disponibilidadHorariaRepository ??= new DisponibilidadHorariaRepository(_context);
         public IOpinionPerroRepository OpinionesPerros => _opinionPerroRepository ??= new OpinionPerroRepository(_context);
         public IRankingPaseadorRepository RankingPaseadores => _rankingPaseadorRepository ??= new RankingPaseadorRepository(_context);
-        
+        public IRefreshTokenRepository RefreshTokens => _refreshTokenRepository ??= new RefreshTokenRepository(_context);
+
         public DogWalkDbContext Context => _context;
         
         public async Task BeginTransactionAsync()

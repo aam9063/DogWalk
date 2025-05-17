@@ -26,7 +26,8 @@ namespace DogWalk_Infrastructure.Persistence.Context
         public DbSet<RankingPaseador> RankingPaseadores { get; set; }
         public DbSet<OpinionPerro> OpinionesPerros { get; set; }
         public DbSet<Role> Roles { get; set; }
-        
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -52,7 +53,22 @@ namespace DogWalk_Infrastructure.Persistence.Context
             modelBuilder.Entity<RankingPaseador>().ToTable("RankingPaseadores");
             modelBuilder.Entity<OpinionPerro>().ToTable("OpinionesPerros");
             modelBuilder.Entity<Role>().ToTable("Roles");
-            
+
+            // Configuración para RefreshToken
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.ToTable("RefreshTokens");
+                entity.HasKey(rt => rt.Id);
+
+                entity.Property(rt => rt.Token).IsRequired();
+                entity.Property(rt => rt.JwtId).IsRequired();
+
+                entity.HasOne(rt => rt.Usuario)
+                      .WithMany()
+                      .HasForeignKey(rt => rt.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
             // Datos semilla
             SeedData(modelBuilder);
         }

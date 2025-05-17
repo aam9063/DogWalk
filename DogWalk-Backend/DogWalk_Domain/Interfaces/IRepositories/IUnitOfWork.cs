@@ -17,8 +17,9 @@ public interface IUnitOfWork : IDisposable
     IDisponibilidadHorariaRepository DisponibilidadHoraria { get; }
     IOpinionPerroRepository OpinionesPerros { get; }
     IRankingPaseadorRepository RankingPaseadores { get; }
-    
-    
+    IRefreshTokenRepository RefreshTokens { get; }
+
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

@@ -15,7 +15,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
         public ReservaRepository(DogWalkDbContext context) : base(context)
         {
         }
-        
+
         public async Task<IEnumerable<Reserva>> GetByUsuarioIdAsync(Guid usuarioId)
         {
             return await _context.Reservas
@@ -26,7 +26,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 .OrderByDescending(r => r.FechaReserva)
                 .ToListAsync();
         }
-        
+
         public async Task<IEnumerable<Reserva>> GetByPaseadorIdAsync(Guid paseadorId)
         {
             return await _context.Reservas
@@ -37,7 +37,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 .OrderByDescending(r => r.FechaReserva)
                 .ToListAsync();
         }
-        
+
         public async Task<IEnumerable<Reserva>> GetByEstadoAsync(EstadoReserva estado)
         {
             return await _context.Reservas
@@ -49,7 +49,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 .OrderByDescending(r => r.FechaReserva)
                 .ToListAsync();
         }
-        
+
         public async Task<IEnumerable<Reserva>> GetByFechaAsync(DateTime fecha)
         {
             return await _context.Reservas
@@ -61,7 +61,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 .OrderBy(r => r.FechaReserva)
                 .ToListAsync();
         }
-        
+
         public override async Task<Reserva> GetByIdAsync(Guid id)
         {
             return await _context.Reservas
@@ -72,7 +72,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 .Include(r => r.Disponibilidad)
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
-        
+
         public async Task<IEnumerable<Reserva>> GetByPerioDoAsync(DateTime fechaInicio, DateTime fechaFin)
         {
             return await _context.Reservas
@@ -83,7 +83,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 .OrderBy(r => r.FechaReserva)
                 .ToListAsync();
         }
-        
+
         public async Task<IEnumerable<Reserva>> GetByPerroIdAsync(Guid perroId)
         {
             return await _context.Reservas

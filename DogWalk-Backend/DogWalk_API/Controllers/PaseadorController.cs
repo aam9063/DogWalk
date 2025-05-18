@@ -19,6 +19,7 @@ using DogWalk_Infrastructure.Authentication;
 using DogWalk_Application.Features.Paseadores.Queries;
 using MediatR;
 using DogWalk_Application.Contracts.DTOs.Busqueda;
+using DogWalk_Application.Contracts.DTOs.Estadisticas;
 
 namespace DogWalk_API.Controllers
 {
@@ -655,6 +656,52 @@ namespace DogWalk_API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Error al buscar paseadores: {ex.Message}" });
+            }
+        }
+
+        // En PaseadorController.cs - Añadir justo antes del último corchete de cierre de la clase
+        [HttpGet("dashboard")]
+        [Authorize(Roles = "Paseador")]
+        public async Task<IActionResult> GetDashboard()
+        {
+            try
+            {
+                var paseadorId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+
+                // Obtener todas las reservas del paseador
+                var reservas = await _unitOfWork.Reservas.GetByPaseadorIdAsync(paseadorId);
+
+                // Obtener valoraciones
+                var valoraciones = await _unitOfWork.RankingPaseadores.GetByPaseadorIdAsync(paseadorId);
+
+                var estadisticas = new EstadisticasPaseadorDto
+                {
+                    TotalReservas = reservas.Count(),
+                    TotalIngresos = reservas.Where(r => r.Estado == EstadoReserva.Completada)
+                                          .Sum(r => r.Precio.Cantidad),
+                    ValoracionPromedio = (decimal)await _unitOfWork.RankingPaseadores.GetPromedioPaseadorAsync(paseadorId),
+                    TotalValoraciones = valoraciones.Count(),
+                    ReservasPendientes = reservas.Count(r => r.Estado == EstadoReserva.Pendiente),
+                    ReservasCompletadas = reservas.Count(r => r.Estado == EstadoReserva.Completada),
+
+                    // Agrupar servicios más reservados
+                    ServiciosMasReservados = reservas.GroupBy(r => r.Servicio.Nombre)
+                                                   .Select(g => new KeyValuePair<string, int>(g.Key, g.Count()))
+                                                   .OrderByDescending(x => x.Value)
+                                                   .ToList(),
+
+                    // Agrupar reservas por día
+                    ReservasPorDia = reservas.GroupBy(r => r.FechaReserva.Date)
+                                            .Select(g => new KeyValuePair<DateTime, int>(g.Key, g.Count()))
+                                            .OrderBy(x => x.Key)
+                                            .ToList()
+                };
+
+                return Ok(estadisticas);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener dashboard: {ex.Message}" });
             }
         }
     }

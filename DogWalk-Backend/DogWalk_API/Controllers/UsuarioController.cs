@@ -1,4 +1,5 @@
 using DogWalk_Application.Contracts.DTOs.Auth;
+using DogWalk_Application.Contracts.DTOs.Estadisticas;
 using DogWalk_Application.Contracts.DTOs.Usuarios;
 using DogWalk_Domain.Common.Enums;
 using DogWalk_Domain.Common.ValueObjects;
@@ -59,9 +60,10 @@ namespace DogWalk_API.Controllers
                 await _unitOfWork.Usuarios.AddAsync(usuario);
                 await _unitOfWork.SaveChangesAsync();
 
-                return Ok(new { 
-                    message = "Usuario registrado correctamente", 
-                    userId = usuario.Id 
+                return Ok(new
+                {
+                    message = "Usuario registrado correctamente",
+                    userId = usuario.Id
                 });
             }
             catch (Exception ex)
@@ -72,21 +74,20 @@ namespace DogWalk_API.Controllers
 
         // Obtener perfil de usuario (protegido)
         [HttpGet("profile")]
-        [Authorize] // Cualquier usuario autenticado puede ver su perfil
+        [Authorize]
         public async Task<IActionResult> GetProfile()
         {
             try
             {
-                // Obtener ID del usuario desde el token
                 var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-                
+
                 var usuario = await _unitOfWork.Usuarios.GetByIdAsync(userId);
                 if (usuario == null)
                 {
                     return NotFound(new { message = "Usuario no encontrado" });
                 }
 
-                // Contar perros y reservas
+                // Obtener perros y reservas
                 var perros = await _unitOfWork.Perros.GetByUsuarioIdAsync(userId);
                 var reservas = await _unitOfWork.Reservas.GetByUsuarioIdAsync(userId);
 
@@ -99,7 +100,16 @@ namespace DogWalk_API.Controllers
                     Email = usuario.Email.ToString(),
                     FotoPerfil = usuario.FotoPerfil,
                     CantidadPerros = perros?.Count() ?? 0,
-                    CantidadReservas = reservas?.Count() ?? 0
+                    CantidadReservas = reservas?.Count() ?? 0,
+                    Perros = perros?.Select(p => new PerroProfileDto
+                    {
+                        Id = p.Id,
+                        Nombre = p.Nombre,
+                        Raza = p.Raza,
+                        Edad = p.Edad,
+                        GpsUbicacion = p.GpsUbicacion,
+                        Fotos = p.Fotos?.Select(f => f.UrlFoto).ToList() ?? new List<string>()
+                    }).ToList() ?? new List<PerroProfileDto>()
                 };
 
                 return Ok(profileDto);
@@ -118,14 +128,14 @@ namespace DogWalk_API.Controllers
             try
             {
                 var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-                
+
                 var usuario = await _unitOfWork.Usuarios.GetByIdAsync(userId);
                 if (usuario == null)
                 {
                     return NotFound(new { message = "Usuario no encontrado" });
                 }
 
-                // Actualizar datos
+                // Actualizar datos del usuario
                 usuario.ActualizarDatos(
                     updateDto.Nombre,
                     updateDto.Apellido,
@@ -135,7 +145,36 @@ namespace DogWalk_API.Controllers
 
                 await _unitOfWork.SaveChangesAsync();
 
-                return Ok(new { message = "Perfil actualizado correctamente" });
+                // Obtener datos actualizados incluyendo los perros
+                var perros = await _unitOfWork.Perros.GetByUsuarioIdAsync(userId);
+                var reservas = await _unitOfWork.Reservas.GetByUsuarioIdAsync(userId);
+
+                // Devolver el perfil actualizado con todos los datos
+                var updatedProfile = new UsuarioProfileDto
+                {
+                    Id = usuario.Id,
+                    Nombre = usuario.Nombre,
+                    Apellido = usuario.Apellido,
+                    Email = usuario.Email.ToString(),
+                    FotoPerfil = usuario.FotoPerfil,
+                    CantidadPerros = perros?.Count() ?? 0,
+                    CantidadReservas = reservas?.Count() ?? 0,
+                    Perros = perros?.Select(p => new PerroProfileDto
+                    {
+                        Id = p.Id,
+                        Nombre = p.Nombre,
+                        Raza = p.Raza,
+                        Edad = p.Edad,
+                        GpsUbicacion = p.GpsUbicacion,
+                        Fotos = p.Fotos?.Select(f => f.UrlFoto).ToList() ?? new List<string>()
+                    }).ToList() ?? new List<PerroProfileDto>()
+                };
+
+                return Ok(new
+                {
+                    message = "Perfil actualizado correctamente",
+                    profile = updatedProfile
+                });
             }
             catch (Exception ex)
             {
@@ -151,7 +190,7 @@ namespace DogWalk_API.Controllers
             try
             {
                 var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-                
+
                 var usuario = await _unitOfWork.Usuarios.GetByIdAsync(userId);
                 if (usuario == null)
                 {
@@ -181,6 +220,81 @@ namespace DogWalk_API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Error al cambiar contraseña: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("dashboard")]
+        [Authorize(Roles = "Usuario")]
+        public async Task<IActionResult> GetDashboard()
+        {
+            try
+            {
+                var usuarioId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+
+                // Obtener datos necesarios
+                var reservas = (await _unitOfWork.Reservas.GetByUsuarioIdAsync(usuarioId))?.ToList() ?? new List<Reserva>();
+                var perros = (await _unitOfWork.Perros.GetByUsuarioIdAsync(usuarioId))?.ToList() ?? new List<Perro>();
+                var facturas = (await _unitOfWork.Facturas.GetByUsuarioIdAsync(usuarioId))?.ToList() ?? new List<Factura>();
+
+                var estadisticas = new EstadisticasUsuarioDto
+                {
+                    TotalReservas = reservas.Count,
+                    TotalGastado = reservas
+                        .Where(r => r.Estado == EstadoReserva.Completada && r.Precio != null)
+                        .Sum(r => r.Precio?.Cantidad ?? 0),
+                    NumeroPerros = perros.Count,
+                    ReservasPendientes = reservas.Count(r => r.Estado == EstadoReserva.Pendiente),
+                    ReservasCompletadas = reservas.Count(r => r.Estado == EstadoReserva.Completada),
+
+                    // Servicios más usados con validación null
+                    ServiciosMasUsados = reservas
+                        .Where(r => r.Servicio != null && !string.IsNullOrEmpty(r.Servicio.Nombre))
+                        .GroupBy(r => r.Servicio.Nombre)
+                        .Select(g => new KeyValuePair<string, int>(g.Key, g.Count()))
+                        .OrderByDescending(x => x.Value)
+                        .ToList(),
+
+                    // Paseadores favoritos con validación null
+                    PaseadoresFavoritos = reservas
+                        .Where(r => r.Paseador != null && !string.IsNullOrEmpty(r.Paseador.Nombre))
+                        .GroupBy(r => r.Paseador.Nombre ?? "Desconocido")
+                        .Select(g => new KeyValuePair<string, int>(g.Key, g.Count()))
+                        .OrderByDescending(x => x.Value)
+                        .ToList()
+                };
+
+                // Obtener historial de compras con validación null
+                var historialCompras = facturas
+                    .Where(f => f != null)
+                    .Select(f => new HistorialCompraDto
+                    {
+                        Id = f.Id,
+                        FechaCompra = f.FechaFactura,
+                        NumeroFactura = f.Id.ToString(),
+                        Total = f.Total?.Cantidad ?? 0,
+                        Detalles = f.Detalles?
+                            .Where(d => d != null && d.Articulo != null)
+                            .Select(d => new DetalleCompraDto
+                            {
+                                NombreArticulo = d.Articulo?.Nombre ?? "Artículo desconocido",
+                                Cantidad = d.Cantidad,
+                                PrecioUnitario = d.PrecioUnitario?.Cantidad ?? 0,
+                                Subtotal = d.Subtotal?.Cantidad ?? 0
+                            })
+                            .ToList() ?? new List<DetalleCompraDto>()
+                    })
+                    .OrderByDescending(h => h.FechaCompra)
+                    .ToList();
+
+                return Ok(new
+                {
+                    Estadisticas = estadisticas,
+                    HistorialCompras = historialCompras
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener dashboard: {ex.Message}" });
             }
         }
     }

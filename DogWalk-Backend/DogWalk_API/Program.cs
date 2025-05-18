@@ -112,34 +112,7 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 // ... otros repositorios
 
 
-// Servicios para seguridad mejorada
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Path.GetTempPath(), "DogWalk_Keys")))
-    .SetApplicationName("DogWalk");
 
-// Configuración de Rate Limiting para prevención de abusos en endpoints de autenticación
-builder.Services.AddRateLimiter(options => {
-    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context => {
-        // Solo aplicar rate limiting a endpoints de autenticación
-        if (context.Request.Path.StartsWithSegments("/api/Auth"))
-        {
-            return RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "anónimo",
-                factory: _ => new FixedWindowRateLimiterOptions
-                {
-                    AutoReplenishment = true,
-                    PermitLimit = 10,
-                    Window = TimeSpan.FromMinutes(1)
-                });
-        }
-        return RateLimitPartition.GetNoLimiter("default");
-    });
-
-    options.OnRejected = async (context, _) => {
-        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        await context.HttpContext.Response.WriteAsync("Demasiadas solicitudes. Por favor, inténtalo de nuevo más tarde.");
-    };
-});
 
 // Registra el contexto de la base de datos
 builder.Services.AddDbContext<DogWalkDbContext>(options =>
@@ -158,27 +131,7 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBeh
 // Registra manualmente JwtProvider
 builder.Services.AddScoped<JwtProvider>();
 
-// IMPORTANTE: deshabilita la configuración de autenticación en Infrastructure 
-// ya que la hemos configurado manualmente arriba
 builder.Services.AddInfrastructure(builder.Configuration, configureAuthentication: false);
-
-// En Program.cs, configura las opciones de cookies
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Strict;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-});
-
-builder.Services.AddAntiforgery(options =>
-{
-    options.HeaderName = "X-CSRF-TOKEN";
-    options.Cookie.Name = "CSRF-TOKEN";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Strict;
-});
-
 
 var app = builder.Build();
 
@@ -197,59 +150,19 @@ using (var scope = app.Services.CreateScope())
     // Inicialización de datos si es necesario
 }
 
-// En Program.cs, después de app.UseRouting()
-app.Use(async (context, next) =>
-{
-    // Seguridad adicional para prevenir ataques
-    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
-    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
-    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
 
-    if (!builder.Environment.IsDevelopment())
-    {
-        context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-    }
-
-    await next();
-});
 
 
 app.UseHttpsRedirection();
-app.UseHsts();
 
 // CORS debe ir antes de Routing
 app.UseCors("AllowSignalR");
 
 app.UseRouting();
-// En Program.cs, después de app.UseRouting()
-app.UseRateLimiter(new RateLimiterOptions
-{
-    GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-    {
-        // Limita las solicitudes a los endpoints de autenticación
-        if (context.Request.Path.StartsWithSegments("/api/auth"))
-        {
-            return RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "anónimo",
-                factory: _ => new FixedWindowRateLimiterOptions
-                {
-                    AutoReplenishment = true,
-                    PermitLimit = 10,
-                    Window = TimeSpan.FromMinutes(1)
-                });
-        }
-        return RateLimitPartition.GetNoLimiter("default");
-    }),
-    OnRejected = (context, _) =>
-    {
-        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        return ValueTask.CompletedTask;
-    }
-});
+
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<AntiforgeryMiddleware>();
 
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");

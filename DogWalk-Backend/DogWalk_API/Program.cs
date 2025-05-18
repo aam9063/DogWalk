@@ -123,8 +123,9 @@ builder.Services.AddScoped<AdminService>();
 // ... otros servicios
 
 // Añade la configuración de MediatR
-builder.Services.AddMediatR(cfg => 
-    cfg.RegisterServicesFromAssembly(typeof(DogWalk_Application.Features.Admin.Commands.CreateAdminCommand).Assembly));
+builder.Services.AddMediatR(cfg => {
+    cfg.RegisterServicesFromAssembly(typeof(DogWalk_Application.Features.Admin.Commands.CreateAdminCommand).Assembly);
+});
 
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 

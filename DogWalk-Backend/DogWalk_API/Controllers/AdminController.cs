@@ -47,5 +47,22 @@ namespace DogWalk_API.Controllers
             var result = await _mediator.Send(new GetAllUsersQuery());
             return Ok(result);
         }
+
+        [HttpDelete("users/{userId}")]
+        public async Task<IActionResult> DeleteUser(Guid userId)
+        {
+            try
+            {
+                var result = await _mediator.Send(new DeleteUserCommand(userId));
+                if (!result)
+                    return NotFound("Usuario no encontrado");
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

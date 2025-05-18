@@ -16,6 +16,13 @@ public class FacturaRepository : RepositoryBase<Factura>, IFacturaRepository
     {
     }
 
+    public override async Task<IEnumerable<Factura>> GetAllAsync()
+    {
+        return await _context.Facturas
+            .Include(f => f.Detalles)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<Factura>> GetByUsuarioIdAsync(Guid usuarioId)
     {
         return await _context.Facturas

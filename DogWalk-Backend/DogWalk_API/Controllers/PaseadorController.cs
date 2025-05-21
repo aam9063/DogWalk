@@ -344,6 +344,7 @@ namespace DogWalk_API.Controllers
         }
 
         // Actualizar perfil de paseador (protegido)
+        // TODO: Mejorar implementacion de updateProfile ya que da 200 pero no hay cambios en BBDD
         [HttpPut("profile")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdatePaseadorDto updateDto)
@@ -596,16 +597,27 @@ namespace DogWalk_API.Controllers
 
                 var reservas = await _unitOfWork.Reservas.GetByPaseadorIdAsync(paseadorId);
 
-                // Implementación simplificada para la lista de reservas
                 var reservasDto = new List<ReservaDto>();
 
                 foreach (var reserva in reservas)
                 {
-                    // Aquí debe ir el mapeo de reserva a ReservaDto según tu modelo
                     reservasDto.Add(new ReservaDto
                     {
-                        Id = reserva.Id
-                        // Completa con las propiedades específicas de tu ReservaDto
+                        Id = reserva.Id,
+                        UsuarioId = reserva.UsuarioId,
+                        NombreUsuario = $"{reserva.Usuario?.Nombre} {reserva.Usuario?.Apellido}".Trim(),
+                        PaseadorId = reserva.PaseadorId,
+                        NombrePaseador = $"{reserva.Paseador?.Nombre} {reserva.Paseador?.Apellido}".Trim(),
+                        PerroId = reserva.PerroId,
+                        NombrePerro = reserva.Perro?.Nombre,
+                        ServicioId = reserva.ServicioId,
+                        NombreServicio = reserva.Servicio?.Nombre,
+                        FechaReserva = reserva.FechaReserva,
+                        FechaServicio = reserva.Disponibilidad?.FechaHora ?? DateTime.MinValue,
+                        Estado = reserva.Estado.ToString(),
+                        Precio = reserva.Precio.Cantidad,
+                        DireccionRecogida = reserva.Usuario?.Direccion?.TextoCompleto ?? "No especificada",
+                        DireccionEntrega = reserva.Usuario?.Direccion?.TextoCompleto ?? "No especificada"
                     });
                 }
 

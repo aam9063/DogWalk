@@ -4,7 +4,7 @@ services:
     container_name: web-api
     build:
       context: .
-      dockerfile: DogWalk-API/Dockerfile
+      dockerfile: DogWalk_API/Dockerfile
     ports:
       - 5208:8080
       - 5209:8081

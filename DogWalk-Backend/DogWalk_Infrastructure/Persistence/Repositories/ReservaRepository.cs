@@ -33,6 +33,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 .Include(r => r.Usuario)
                 .Include(r => r.Servicio)
                 .Include(r => r.Perro)
+                .Include(r => r.Disponibilidad)
                 .Where(r => r.PaseadorId == paseadorId)
                 .OrderByDescending(r => r.FechaReserva)
                 .ToListAsync();

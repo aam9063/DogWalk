@@ -22,6 +22,8 @@ using Microsoft.AspNetCore.DataProtection;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using DogWalk_API.Middleware;
+using DogWalk_Infrastructure.Configuration;
+using DogWalk_Infrastructure.Services.OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -133,6 +135,16 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBeh
 builder.Services.AddScoped<JwtProvider>();
 
 builder.Services.AddInfrastructure(builder.Configuration, configureAuthentication: false);
+
+// Configuración de OpenAI
+builder.Services.Configure<OpenAISettings>(
+    builder.Configuration.GetSection("OpenAI"));
+
+// Registrar HttpClient para OpenAI
+builder.Services.AddHttpClient<OpenAIService>();
+
+// Registrar el servicio
+builder.Services.AddScoped<OpenAIService>();
 
 var app = builder.Build();
 

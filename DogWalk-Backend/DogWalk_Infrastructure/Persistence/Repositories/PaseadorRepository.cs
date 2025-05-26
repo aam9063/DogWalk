@@ -131,5 +131,22 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
                 .Where(p => p.Disponibilidad.Any(d => d.FechaHora.Date == fecha.Date))
                 .ToListAsync();
         }
+
+        public async Task<(IEnumerable<Paseador> Paseadores, int Total)> GetPaginadosAsync(int numeroPagina, int elementosPorPagina)
+    {
+        var query = _context.Paseadores.AsQueryable();
+        
+        // Obtener el total antes de paginar
+        var total = await query.CountAsync();
+        
+        // Aplicar paginación
+        var paseadores = await query
+            .OrderBy(p => p.Apellido) // Puedes cambiar el ordenamiento según necesites
+            .Skip((numeroPagina - 1) * elementosPorPagina)
+            .Take(elementosPorPagina)
+            .ToListAsync();
+
+        return (paseadores, total);
+    }
     }
 }

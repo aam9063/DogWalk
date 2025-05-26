@@ -209,8 +209,7 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Primer endpoint para el perfil público (el que acabamos de crear)
-        [HttpGet("public/{id}")]  // Cambiamos la ruta
+        [HttpGet("public/{id}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetPaseadorPublicProfile(Guid id)
         {
@@ -278,8 +277,7 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Segundo endpoint para detalles (el que ya existía)
-        [HttpGet("details/{id}")]  // Cambiamos la ruta
+        [HttpGet("details/{id}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetPaseadorDetails(Guid id)
         {
@@ -343,8 +341,6 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Actualizar perfil de paseador (protegido)
-        // TODO: Mejorar implementacion de updateProfile ya que da 200 pero no hay cambios en BBDD
         [HttpPut("profile")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdatePaseadorDto updateDto)
@@ -359,10 +355,25 @@ namespace DogWalk_API.Controllers
                     return NotFound(new { message = "Paseador no encontrado" });
                 }
 
+                // Actualizar información personal
+                var direccion = !string.IsNullOrEmpty(updateDto.Direccion)
+                    ? Direccion.Create(updateDto.Direccion)
+                    : null;
+
+                var telefono = !string.IsNullOrEmpty(updateDto.Telefono)
+                    ? Telefono.Create(updateDto.Telefono)
+                    : null;
+
+                paseador.ActualizarInformacionPersonal(
+                    updateDto.Nombre,
+                    updateDto.Apellido,
+                    direccion,
+                    telefono
+                );
+
                 // Actualizar ubicación si se proporcionaron coordenadas
                 if (updateDto.Latitud != 0 && updateDto.Longitud != 0)
                 {
-                    // Usar el método estático Create para las coordenadas
                     var nuevasCoordenadas = Coordenadas.Create(updateDto.Latitud, updateDto.Longitud);
                     paseador.ActualizarUbicacion(nuevasCoordenadas);
                 }
@@ -550,33 +561,42 @@ namespace DogWalk_API.Controllers
         // Lista pública de paseadores (para usuarios)
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetPaseadores()
+        public async Task<IActionResult> GetPaseadores([FromQuery] PaginacionParams paginacionParams)
         {
             try
             {
-                // Obtener todos los paseadores
-                var paseadores = await _unitOfWork.Paseadores.GetAllAsync();
-                var resultado = new List<PaseadorDto>();
+                var (paseadores, total) = await _unitOfWork.Paseadores.GetPaginadosAsync(
+                    paginacionParams.PageNumber,
+                    paginacionParams.PageSize
+                );
 
-                foreach (var paseador in paseadores)
+                var paseadoresDto = paseadores.Select(p => new PaseadorDto
                 {
-                    // Crear DTO para el listado usando tu PaseadorDto existente
-                    resultado.Add(new PaseadorDto
-                    {
-                        Id = paseador.Id,
-                        Dni = paseador.Dni.ToString(),
-                        Nombre = paseador.Nombre,
-                        Apellido = paseador.Apellido,
-                        Direccion = paseador.Direccion.ToString(),
-                        Email = paseador.Email.ToString(),
-                        Telefono = paseador.Telefono?.ToString(),
-                        FotoPerfil = paseador.FotoPerfil,
-                        ValoracionGeneral = paseador.ValoracionGeneral,
-                        Latitud = paseador.Ubicacion.Latitud,
-                        Longitud = paseador.Ubicacion.Longitud,
-                        FechaRegistro = paseador.CreadoEn
-                    });
-                }
+                    Id = p.Id,
+                    Dni = p.Dni.ToString(),
+                    Nombre = p.Nombre,
+                    Apellido = p.Apellido,
+                    Direccion = p.Direccion.ToString(),
+                    Email = p.Email.ToString(),
+                    Telefono = p.Telefono?.ToString(),
+                    FotoPerfil = p.FotoPerfil,
+                    ValoracionGeneral = p.ValoracionGeneral,
+                    Latitud = p.Ubicacion.Latitud,
+                    Longitud = p.Ubicacion.Longitud,
+                    FechaRegistro = p.CreadoEn
+                }).ToList();
+
+                var resultado = new PaseadoresPaginadosDto
+                {
+                    Items = paseadoresDto,
+                    TotalItems = total,
+                    PaginaActual = paginacionParams.PageNumber,
+                    ElementosPorPagina = paginacionParams.PageSize,
+                    TotalPaginas = (int)Math.Ceiling(total / (double)paginacionParams.PageSize),
+                    // Opcional: calcular estadísticas adicionales
+                    TotalPaseadoresActivos = total,
+                    ValoracionPromedio = paseadoresDto.Any() ? paseadoresDto.Average(p => p.ValoracionGeneral) : 0
+                };
 
                 return Ok(resultado);
             }

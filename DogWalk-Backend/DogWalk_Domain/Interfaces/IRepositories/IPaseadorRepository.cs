@@ -14,4 +14,5 @@ public interface IPaseadorRepository : IRepository<Paseador>
         Task<IEnumerable<Paseador>> GetWithServicioAsync(Guid servicioId);
         Task<IEnumerable<Paseador>> GetByDisponibilidadAsync(bool disponible = true);
         Task<IEnumerable<Paseador>> GetByFechaAsync(DateTime fecha);
+        Task<(IEnumerable<Paseador> Paseadores, int Total)> GetPaginadosAsync(int numeroPagina, int elementosPorPagina);
     }

@@ -34,7 +34,7 @@ namespace DogWalk_API.Controllers
             try
             {
                 var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
-                if (usuario == null) 
+                if (usuario == null)
                     return NotFound("Usuario no encontrado");
 
                 var carritoItems = new List<ItemCarritoDto>();
@@ -84,7 +84,7 @@ namespace DogWalk_API.Controllers
                 await _unitOfWork.BeginTransactionAsync();
 
                 var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
-                if (usuario == null) 
+                if (usuario == null)
                     return NotFound("Usuario no encontrado");
 
                 var articulo = await _unitOfWork.Articulos.GetByIdAsync(dto.ArticuloId);
@@ -145,7 +145,7 @@ namespace DogWalk_API.Controllers
                 await _unitOfWork.BeginTransactionAsync();
 
                 var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
-                if (usuario == null) 
+                if (usuario == null)
                     return NotFound("Usuario no encontrado");
 
                 var itemCarrito = usuario.Carrito.FirstOrDefault(i => i.Id == dto.ItemCarritoId);
@@ -180,25 +180,47 @@ namespace DogWalk_API.Controllers
         [HttpDelete("eliminar/{itemCarritoId}")]
         public async Task<IActionResult> EliminarItem(Guid itemCarritoId)
         {
-            var usuario = await _unitOfWork.Usuarios.GetByIdAsync(GetUserId());
-            if (usuario == null) return NotFound("Usuario no encontrado");
+            try
+            {
+                await _unitOfWork.BeginTransactionAsync();
 
-            usuario.EliminarItemCarrito(itemCarritoId);
-            await _unitOfWork.SaveChangesAsync();
+                var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
+                if (usuario == null) return NotFound("Usuario no encontrado");
 
-            return Ok(new { mensaje = "Artículo eliminado del carrito" });
+                usuario.EliminarItemCarrito(itemCarritoId);
+                await _unitOfWork.SaveChangesAsync();
+                await _unitOfWork.CommitTransactionAsync();
+
+                return Ok(new { mensaje = "Artículo eliminado del carrito" });
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                return StatusCode(500, new { error = "Error al eliminar el artículo", detalle = ex.Message });
+            }
         }
 
         [HttpPost("vaciar")]
         public async Task<IActionResult> VaciarCarrito()
         {
-            var usuario = await _unitOfWork.Usuarios.GetByIdAsync(GetUserId());
-            if (usuario == null) return NotFound("Usuario no encontrado");
+            try
+            {
+                await _unitOfWork.BeginTransactionAsync();
 
-            usuario.VaciarCarrito();
-            await _unitOfWork.SaveChangesAsync();
+                var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
+                if (usuario == null) return NotFound("Usuario no encontrado");
 
-            return Ok(new { mensaje = "Carrito vaciado correctamente" });
+                usuario.VaciarCarrito();
+                await _unitOfWork.SaveChangesAsync();
+                await _unitOfWork.CommitTransactionAsync();
+
+                return Ok(new { mensaje = "Carrito vaciado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                return StatusCode(500, new { error = "Error al vaciar el carrito", detalle = ex.Message });
+            }
         }
     }
 }

@@ -1,5 +1,8 @@
 namespace DogWalk_Application.Contracts.DTOs.Paseadores
 {
+    /// <summary>
+    /// DTO para representar el perfil de un paseador.
+    /// </summary>
     public class PaseadorProfileDto
     {
         public Guid Id { get; set; }
@@ -13,6 +16,9 @@ namespace DogWalk_Application.Contracts.DTOs.Paseadores
         public List<ServicioPrecioSimpleDto> Servicios { get; set; } = new List<ServicioPrecioSimpleDto>();
     }
 
+    /// <summary>
+    /// DTO para representar un servicio con su precio.
+    /// </summary>
     public class ServicioPrecioSimpleDto
     {
         public Guid ServicioId { get; set; }

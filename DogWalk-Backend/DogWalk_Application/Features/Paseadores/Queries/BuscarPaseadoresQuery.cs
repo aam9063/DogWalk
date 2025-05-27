@@ -5,6 +5,9 @@ using MediatR;
 
 namespace DogWalk_Application.Features.Paseadores.Queries;
 
+/// <summary>
+/// Consulta para buscar paseadores.
+/// </summary>
 public class BuscarPaseadoresQuery : IRequest<ResultadoPaginadoDto<PaseadorMapDto>>
 {
     public string CodigoPostal { get; set; }

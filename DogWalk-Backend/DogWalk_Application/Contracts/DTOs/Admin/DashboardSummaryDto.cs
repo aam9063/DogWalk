@@ -1,5 +1,8 @@
 namespace DogWalk_Application.Contracts.DTOs.Admin
 {
+    /// <summary>
+    /// DTO para representar el resumen del dashboard.
+    /// </summary>
     public class DashboardSummaryDto
     {
         public int TotalUsuarios { get; set; }

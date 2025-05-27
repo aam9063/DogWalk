@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace DogWalk_Application.Contracts.DTOs.Articulos;
 
+/// <summary>
+/// DTO para actualizar un artículo.
+/// </summary>
 public class UpdateArticuloDto
 {
     public string Nombre { get; set; }

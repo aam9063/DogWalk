@@ -10,15 +10,27 @@ using System.Threading.Tasks;
 
 namespace DogWalk_Application.Features.Paseadores.Queries
 {
+    /// <summary>
+    /// Manejador para buscar paseadores.
+    /// </summary>
     public class BuscarPaseadoresQueryHandler : IRequestHandler<BuscarPaseadoresQuery, ResultadoPaginadoDto<PaseadorMapDto>>
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor para el manejador de consultas de paseadores.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo.</param>
         public BuscarPaseadoresQueryHandler(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Maneja la consulta para buscar paseadores.
+        /// </summary>
+        /// <param name="request">Consulta para buscar paseadores.</param>
+        /// <param name="cancellationToken">Token de cancelación.</param>
         public async Task<ResultadoPaginadoDto<PaseadorMapDto>> Handle(BuscarPaseadoresQuery request, CancellationToken cancellationToken)
         {
             // Obtener todos los paseadores

@@ -3,6 +3,9 @@ using DogWalk_Application.Contracts.DTOs.Reservas;
 
 namespace DogWalk_Application.Contracts.DTOs.Paseadores
 {
+    /// <summary>
+    /// DTO para representar los detalles de un paseador.
+    /// </summary>
     public class PaseadorDetailsDto
     {
         public Guid Id { get; set; }
@@ -20,6 +23,9 @@ namespace DogWalk_Application.Contracts.DTOs.Paseadores
         public List<ReservaDto> ReservasProximas { get; set; } = new List<ReservaDto>();
     }
 
+    /// <summary>
+    /// DTO para representar la disponibilidad de un paseador.
+    /// </summary>
     public class DisponibilidadDto
     {
         public Guid Id { get; set; }
@@ -27,6 +33,9 @@ namespace DogWalk_Application.Contracts.DTOs.Paseadores
         public string Estado { get; set; } // "Disponible" o "Reservado"
     }
 
+    /// <summary>
+    /// DTO para representar una valoración de un paseador.
+    /// </summary>
     public class ValoracionDto
     {
         public Guid Id { get; set; }

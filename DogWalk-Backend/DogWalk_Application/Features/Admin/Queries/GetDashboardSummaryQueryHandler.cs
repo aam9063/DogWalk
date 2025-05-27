@@ -10,15 +10,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DogWalk_Application.Features.Admin.Queries
 {
+    /// <summary>
+    /// Manejador para obtener el resumen del dashboard.
+    /// </summary>
     public class GetDashboardSummaryQueryHandler : IRequestHandler<GetDashboardSummaryQuery, DashboardSummaryDto>
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor para el manejador de consultas de resumen del dashboard.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo.</param>
         public GetDashboardSummaryQueryHandler(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Maneja la consulta para obtener el resumen del dashboard.
+        /// </summary>
+        /// <param name="request">Consulta para obtener el resumen del dashboard.</param>
+        /// <param name="cancellationToken">Token de cancelación.</param>
         public async Task<DashboardSummaryDto> Handle(GetDashboardSummaryQuery request, CancellationToken cancellationToken)
         {
             // Obtener datos básicos

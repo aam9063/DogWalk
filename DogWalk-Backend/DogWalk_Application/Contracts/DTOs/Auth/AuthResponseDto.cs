@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Auth;
 
+/// <summary>
+/// DTO para representar la respuesta de la autenticación.
+/// </summary>
 public class AuthResponseDto
 {
     public bool Success { get; set; }

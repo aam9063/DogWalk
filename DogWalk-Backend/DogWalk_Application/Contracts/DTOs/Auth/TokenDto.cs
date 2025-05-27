@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Auth
 {
+    /// <summary>
+    /// DTO para representar un token de autenticación.
+    /// </summary>
     public class TokenDto
     {
         public string AccessToken { get; set; }

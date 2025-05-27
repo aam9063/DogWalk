@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace DogWalk_Application.Contracts.DTOs.Articulos;
 
+/// <summary>
+/// DTO para representar los detalles de un artículo.
+/// </summary>
 public class ArticuloDetailsDto
 {
     public Guid Id { get; set; }

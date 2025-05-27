@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Auth
 {
+    /// <summary>
+    /// DTO para registrar un nuevo usuario.
+    /// </summary>
     public class RegisterUserDto
     {
         public string Dni { get; set; }

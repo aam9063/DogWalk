@@ -5,6 +5,9 @@ using DogWalk_Application.Contracts.DTOs.Reservas;
 
 namespace DogWalk_Application.Contracts.DTOs.Usuarios
 {
+    /// <summary>
+    /// DTO para representar los detalles de un usuario.
+    /// </summary>
     public class UsuarioDetailsDto
     {
         public Guid Id { get; set; }

@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Carrito
 {
+    /// <summary>
+    /// DTO para representar un artículo en el carrito.
+    /// </summary>
     public class ItemCarritoDto
     {
         public Guid Id { get; set; }

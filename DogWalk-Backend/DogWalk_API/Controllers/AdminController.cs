@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja todas las operaciones relacionadas con el administrador.
+    /// Incluye gestión de usuarios, creación de administradores y asignación de roles.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Administrador")]
@@ -14,11 +18,23 @@ namespace DogWalk_API.Controllers
     {
         private readonly IMediator _mediator;
 
+        /// <summary>
+        /// Constructor del controlador de administración.
+        /// </summary>
+        /// <param name="mediator">Mediador para la comunicación entre componentes</param>
         public AdminController(IMediator mediator)
         {
             _mediator = mediator;
         }
 
+        /// <summary>
+        /// Crea un nuevo administrador.
+        /// </summary>
+        /// <param name="command">Comando para crear un administrador</param>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="200">Si el administrador se creó correctamente</response>
+        /// <response code="400">Si el administrador no se creó correctamente</response>
+        /// <response code="500">Si ocurre un error al crear el administrador</response>
         [HttpPost("create")]
         [AllowAnonymous]
         public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminCommand command)
@@ -27,6 +43,14 @@ namespace DogWalk_API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Asigna un rol a un usuario.
+        /// </summary>
+        /// <param name="command">Comando para asignar un rol</param>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="204">Si el rol se asignó correctamente</response>
+        /// <response code="400">Si el rol no se asignó correctamente</response>
+        /// <response code="500">Si ocurre un error al asignar el rol</response>
         [HttpPost("assign-role")]
         public async Task<IActionResult> AssignRole(AssignRoleCommand command)
         {
@@ -34,6 +58,13 @@ namespace DogWalk_API.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Obtiene el resumen del dashboard.
+        /// </summary>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="200">Si el resumen se obtuvo correctamente</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="500">Si ocurre un error al obtener el resumen</response>
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard()
         {
@@ -41,6 +72,13 @@ namespace DogWalk_API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Obtiene todos los usuarios.
+        /// </summary>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="200">Si los usuarios se obtuvieron correctamente</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="500">Si ocurre un error al obtener los usuarios</response>
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -48,6 +86,14 @@ namespace DogWalk_API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Elimina un usuario.
+        /// </summary>
+        /// <param name="userId">ID del usuario a eliminar</param>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="204">Si el usuario se eliminó correctamente</response>
+        /// <response code="400">Si el usuario no se eliminó correctamente</response>
+        /// <response code="500">Si ocurre un error al eliminar el usuario</response>
         [HttpDelete("users/{userId}")]
         public async Task<IActionResult> DeleteUser(Guid userId)
         {

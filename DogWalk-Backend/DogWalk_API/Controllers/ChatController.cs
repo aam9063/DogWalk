@@ -11,6 +11,9 @@ using System.Security.Claims;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador para la interacción con el chat.
+    /// </summary>
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
@@ -18,11 +21,19 @@ namespace DogWalk_API.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor del controlador de chat.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo para la base de datos</param>
         public ChatController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Obtiene todas las conversaciones del usuario.
+        /// </summary>
+        /// <returns>Lista de conversaciones</returns>
         [HttpGet("conversaciones")]
         public async Task<ActionResult<List<ResumenConversacionDto>>> GetConversaciones()
         {
@@ -143,6 +154,11 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtiene una conversación específica.
+        /// </summary>
+        /// <param name="contactoId">ID del contacto</param>
+        /// <returns>Conversación</returns>
         [HttpGet("conversacion/{contactoId}")]
         public async Task<ActionResult<ConversacionDto>> GetConversacion(Guid contactoId)
         {

@@ -1,5 +1,8 @@
 namespace DogWalk_Application.Contracts.DTOs.Paseadores
 {
+    /// <summary>
+    /// DTO para representar un paseador.
+    /// </summary>
     public class PaseadorDto
     {
         public Guid Id { get; set; }

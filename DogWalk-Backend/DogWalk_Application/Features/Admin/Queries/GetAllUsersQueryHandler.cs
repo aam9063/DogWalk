@@ -9,15 +9,27 @@ using System.Threading.Tasks;
 
 namespace DogWalk_Application.Features.Admin.Queries
 {
+    /// <summary>
+    /// Manejador para obtener todos los usuarios.
+    /// </summary>
     public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, List<UserManagementDto>>
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor para el manejador de consultas de usuarios.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo.</param>
         public GetAllUsersQueryHandler(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Maneja la consulta para obtener todos los usuarios.
+        /// </summary>
+        /// <param name="request">Consulta para obtener todos los usuarios.</param>
+        /// <param name="cancellationToken">Token de cancelación.</param>
         public async Task<List<UserManagementDto>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
         {
             var usuarios = await _unitOfWork.Usuarios.GetAllAsync();

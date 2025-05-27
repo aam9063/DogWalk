@@ -1,5 +1,8 @@
 namespace DogWalk_Application.Contracts.DTOs.Servicios
 {
+    /// <summary>
+    /// DTO para representar un servicio.
+    /// </summary>
     public class ServicioDto
     {
         public Guid Id { get; set; }

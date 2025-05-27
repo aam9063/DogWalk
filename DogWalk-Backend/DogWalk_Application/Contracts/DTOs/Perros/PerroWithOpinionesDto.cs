@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace DogWalk_Application.Contracts.DTOs.Perros
 {
+    /// <summary>
+    /// DTO para representar un perro con sus opiniones.
+    /// </summary>
     public class PerroWithOpinionesDto
     {
         public Guid Id { get; set; }
@@ -17,6 +20,9 @@ namespace DogWalk_Application.Contracts.DTOs.Perros
         public List<OpinionPerroDto> Opiniones { get; set; } = new List<OpinionPerroDto>();
     }
 
+    /// <summary>
+    /// DTO para representar una opinión de un perro.
+    /// </summary>
     public class OpinionPerroDto
     {
         public Guid Id { get; set; }

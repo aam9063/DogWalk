@@ -8,16 +8,26 @@ using System.Threading.Tasks;
 
 namespace DogWalk_API.Hubs
 {
+    /// <summary>
+    /// Hub de chat para la comunicación entre usuarios y paseadores.
+    /// </summary>
     [Authorize]
     public class ChatHub : Hub
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor del hub de chat.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo.</param>
         public ChatHub(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Maneja el evento de conexión del usuario.
+        /// </summary>
         public override async Task OnConnectedAsync()
         {
             var userId = Context.User.FindFirst("sub")?.Value;
@@ -28,6 +38,10 @@ namespace DogWalk_API.Hubs
             await base.OnConnectedAsync();
         }
 
+        /// <summary>
+        /// Envia un mensaje de chat.
+        /// </summary>
+        /// <param name="mensaje">Datos del mensaje a enviar.</param>
         [Authorize]
         public async Task EnviarMensaje(EnviarMensajeDto mensaje)
         {
@@ -123,6 +137,10 @@ namespace DogWalk_API.Hubs
             }
         }
 
+        /// <summary>
+        /// Marca un mensaje como leído.
+        /// </summary>
+        /// <param name="mensajeId">ID del mensaje a marcar como leído.</param>
         [Authorize]
         public async Task MarcarLeido(Guid mensajeId)
         {

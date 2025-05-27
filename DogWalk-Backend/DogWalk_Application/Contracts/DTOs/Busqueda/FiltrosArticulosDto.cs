@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Busqueda
 {
+    /// <summary>
+    /// DTO para representar los filtros de búsqueda de artículos.
+    /// </summary>
     public class FiltrosArticulosDto
     {
         public string Busqueda { get; set; }

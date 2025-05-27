@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Facturas
 {
+    /// <summary>
+    /// DTO para representar un detalle de factura.
+    /// </summary>
     public class DetalleFacturaDto
     {
         public Guid Id { get; set; }

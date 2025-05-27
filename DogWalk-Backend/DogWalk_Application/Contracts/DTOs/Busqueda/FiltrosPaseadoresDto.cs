@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Busqueda
 {
+    /// <summary>
+    /// DTO para representar los filtros de búsqueda de paseadores.
+    /// </summary>
     public class FiltrosPaseadoresDto
     {
         public string Busqueda { get; set; } // Texto libre de búsqueda

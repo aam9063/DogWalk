@@ -1,5 +1,8 @@
 namespace DogWalk_Application.Contracts.DTOs.Paseadores
 {
+    /// <summary>
+    /// DTO para actualizar un paseador.
+    /// </summary>
     public class UpdatePaseadorDto
     {
         public string Nombre { get; set; }

@@ -6,6 +6,9 @@ using DogWalk_Application.Contracts.DTOs.Usuarios;
 
 namespace DogWalk_Application.Contracts.DTOs.Reservas;
 
+/// <summary>
+/// DTO para representar los detalles de una reserva.
+/// </summary>
 public class ReservaDetailsDto
 {
     public Guid Id { get; set; }

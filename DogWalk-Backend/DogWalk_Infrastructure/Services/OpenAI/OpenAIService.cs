@@ -9,6 +9,9 @@ using Microsoft.Extensions.Configuration;
 
 namespace DogWalk_Infrastructure.Services.OpenAI
 {
+    /// <summary>
+    /// Servicio para interactuar con OpenAI.
+    /// </summary>
     public class OpenAIService
     {
         private readonly HttpClient _httpClient;
@@ -16,6 +19,12 @@ namespace DogWalk_Infrastructure.Services.OpenAI
         private readonly string _apiKey;
         private readonly OpenAISettings _settings;
 
+        /// <summary>
+        /// Constructor del servicio OpenAI.
+        /// </summary>
+        /// <param name="httpClient">Cliente HTTP para realizar solicitudes a OpenAI.</param>
+        /// <param name="logger">Logger para registrar mensajes.</param>
+        /// <param name="configuration">Configuración de la aplicación.</param>
         public OpenAIService(
             HttpClient httpClient,
             ILogger<OpenAIService> logger,
@@ -43,6 +52,12 @@ namespace DogWalk_Infrastructure.Services.OpenAI
                 new AuthenticationHeaderValue("Bearer", _apiKey);
         }
 
+        /// <summary>
+        /// Obtiene la respuesta del asistente de OpenAI.
+        /// </summary>
+        /// <param name="mensaje">Mensaje del usuario.</param>
+        /// <param name="contexto">Contexto actual.</param>
+        /// <param name="metaDatos">Metadatos adicionales.</param>
         public async Task<string> GetAsistenteResponseAsync(string mensaje, string contexto, Dictionary<string, string> metaDatos)
         {
             int maxRetries = 3;
@@ -120,6 +135,12 @@ namespace DogWalk_Infrastructure.Services.OpenAI
             throw new Exception("No se pudo completar la solicitud después de varios intentos");
         }
 
+        /// <summary>
+        /// Construye el prompt para la solicitud a OpenAI.
+        /// </summary>
+        /// <param name="mensaje">Mensaje del usuario.</param>
+        /// <param name="contexto">Contexto actual.</param>
+        /// <param name="metaDatos">Metadatos adicionales.</param>
         private string ConstruirPrompt(string mensaje, string contexto, Dictionary<string, string> metaDatos)
         {
             var promptBuilder = new StringBuilder();

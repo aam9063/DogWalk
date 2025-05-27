@@ -15,22 +15,52 @@ using System.Security.Claims;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja el webhook de Stripe para procesar pagos.
+    /// </summary>
     [Route("api/stripe-webhook")]
     [ApiController]
     public class StripeFinalController : ControllerBase
     {
+        /// <summary>
+        /// Obtiene la unidad de trabajo para acceso a datos.
+        /// </summary>
+        /// <param name="context">Contexto HTTP</param>
+        /// <returns>Unidad de trabajo</returns>
         private static IUnitOfWork GetUnitOfWork(HttpContext context) => 
             context.RequestServices.GetRequiredService<IUnitOfWork>();
-            
+
+        /// <summary>
+        /// Obtiene el servicio de Stripe.
+        /// </summary>
+        /// <param name="context">Contexto HTTP</param>
+        /// <returns>Servicio de Stripe</returns>
         private static StripeService GetStripeService(HttpContext context) => 
             context.RequestServices.GetRequiredService<StripeService>();
-            
+
+        /// <summary>
+        /// Obtiene el logger para el controlador de Stripe.
+        /// </summary>
+        /// <param name="context">Contexto HTTP</param>
+        /// <returns>Logger</returns>
         private static ILogger<StripeFinalController> GetLogger(HttpContext context) =>
             context.RequestServices.GetRequiredService<ILogger<StripeFinalController>>();
 
+        /// <summary>
+        /// Obtiene la configuración para el controlador de Stripe.
+        /// </summary>
+        /// <param name="context">Contexto HTTP</param>
+        /// <returns>Configuración</returns>
         private static IConfiguration GetConfiguration(HttpContext context) =>
             context.RequestServices.GetRequiredService<IConfiguration>();
 
+        /// <summary>
+        /// Maneja el evento de Stripe.
+        /// </summary>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="200">Si el evento se procesó correctamente</response>
+        /// <response code="400">Si el evento no se procesó correctamente</response>
+        /// <response code="500">Si ocurre un error al procesar el evento</response>
         [HttpPost]
         public async Task<IActionResult> HandleStripeEvent()
         {
@@ -122,6 +152,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Inicia el proceso de pago.
+        /// </summary>
+        /// <param name="checkout">Datos del pago</param>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="200">Si el pago se inició correctamente</response>
+        /// <response code="400">Si el pago no se inició correctamente</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="500">Si ocurre un error al iniciar el pago</response>
         [HttpPost("iniciar-pago")]
         [Authorize]
         public async Task<IActionResult> IniciarPago([FromBody] CheckoutDto checkout)

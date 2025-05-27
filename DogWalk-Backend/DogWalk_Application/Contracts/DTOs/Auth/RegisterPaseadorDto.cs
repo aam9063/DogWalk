@@ -4,6 +4,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DogWalk_Application.Contracts.DTOs.Auth
 {
+    /// <summary>
+    /// DTO para registrar un nuevo paseador.
+    /// </summary>
     public class RegisterPaseadorDto
     {
         [Required]

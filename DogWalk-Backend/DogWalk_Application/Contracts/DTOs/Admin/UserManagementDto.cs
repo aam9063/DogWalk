@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace DogWalk_Application.Contracts.DTOs.Admin;
 
+/// <summary>
+/// DTO para la gestión de usuarios.
+/// </summary>
 public class UserManagementDto
 {
     public Guid Id { get; set; }

@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace DogWalk_Application.Contracts.DTOs.Articulos;
 
+/// <summary>
+/// DTO para crear un nuevo artículo.
+/// </summary>
 public class CreateArticuloDto
 {
     public string Nombre { get; set; }

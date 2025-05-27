@@ -10,6 +10,10 @@ using System.Security.Claims;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja todas las operaciones relacionadas con el carrito de compras.
+    /// Incluye gestión de artículos, cantidad y total del carrito.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -18,6 +22,11 @@ namespace DogWalk_API.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly EmailService _emailService;
 
+        /// <summary>
+        /// Constructor del controlador de carrito.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo para acceso a datos</param>
+        /// <param name="emailService">Servicio de envío de correos electrónicos</param>
         public CarritoController(IUnitOfWork unitOfWork, EmailService emailService)
         {
             _unitOfWork = unitOfWork;
@@ -28,6 +37,15 @@ namespace DogWalk_API.Controllers
         private Guid GetUserId() =>
             Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
+
+        
+
+        /// <summary>
+        /// Obtiene el carrito de compras del usuario autenticado.
+        /// </summary>
+        /// <returns>Detalles del carrito de compras</returns>
+        /// <response code="200">Retorna el carrito de compras</response>
+        /// <response code="404">Si el usuario no se encuentra</response>
         [HttpGet]
         public async Task<ActionResult<CarritoDto>> GetCarrito()
         {
@@ -73,6 +91,14 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Agrega un artículo al carrito de compras del usuario autenticado.
+        /// </summary>
+        /// <param name="dto">Datos del artículo a agregar</param>
+        /// <returns>Confirmación del agregado</returns>
+        /// <response code="200">Si el artículo se agregó correctamente</response>
+        /// <response code="400">Si la cantidad es inválida</response>
+        /// <response code="404">Si el usuario o artículo no se encuentra</response>
         [HttpPost("agregar")]
         public async Task<IActionResult> AgregarArticulo([FromBody] AddItemCarritoDto dto)
         {
@@ -134,6 +160,14 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Actualiza la cantidad de un artículo en el carrito de compras del usuario autenticado.
+        /// </summary>
+        /// <param name="dto">Datos de actualización de cantidad</param>
+        /// <returns>Confirmación de la actualización</returns>
+        /// <response code="200">Si la cantidad se actualizó correctamente</response>
+        /// <response code="400">Si la cantidad es inválida</response>
+        /// <response code="404">Si el usuario o artículo no se encuentra</response>
         [HttpPut("actualizar")]
         public async Task<IActionResult> ActualizarCantidad([FromBody] UpdateItemCarritoDto dto)
         {
@@ -177,6 +211,14 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Elimina un artículo del carrito de compras del usuario autenticado.
+        /// </summary>
+        /// <param name="itemCarritoId">ID del artículo a eliminar</param>
+        /// <returns>Confirmación de la eliminación</returns>
+        /// <response code="200">Si el artículo se eliminó correctamente</response>
+        /// <response code="404">Si el usuario o artículo no se encuentra</response>
+        /// <response code="500">Si ocurre un error al eliminar el artículo</response>
         [HttpDelete("eliminar/{itemCarritoId}")]
         public async Task<IActionResult> EliminarItem(Guid itemCarritoId)
         {
@@ -200,6 +242,13 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Vacia el carrito de compras del usuario autenticado.
+        /// </summary>
+        /// <returns>Confirmación de la vaciación</returns>
+        /// <response code="200">Si el carrito se vació correctamente</response>
+        /// <response code="404">Si el usuario no se encuentra</response>
+        /// <response code="500">Si ocurre un error al vaciar el carrito</response>
         [HttpPost("vaciar")]
         public async Task<IActionResult> VaciarCarrito()
         {

@@ -11,6 +11,9 @@ using Microsoft.Extensions.Logging;
 
 namespace DogWalk_API.Controllers;
 
+/// <summary>
+/// Controlador para procesar el pago con Stripe.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class CheckoutController : ControllerBase
@@ -19,6 +22,12 @@ public class CheckoutController : ControllerBase
     private readonly StripeService _stripeService;
     private readonly ILogger<CheckoutController> _logger;
 
+    /// <summary>
+    /// Constructor del controlador de checkout.
+    /// </summary>
+    /// <param name="unitOfWork">Unidad de trabajo</param>
+    /// <param name="stripeService">Servicio de Stripe</param>
+    /// <param name="logger">Logger</param>
     public CheckoutController(
         IUnitOfWork unitOfWork,
         StripeService stripeService,
@@ -29,6 +38,13 @@ public class CheckoutController : ControllerBase
         _logger = logger;
     }
 
+    /// <summary>
+    /// Procesa el checkout.
+    /// </summary>
+    /// <returns>Resultado de la operación</returns>
+    /// <response code="200">Si el checkout se procesó correctamente</response>
+    /// <response code="400">Si el checkout no se procesó correctamente</response>
+    /// <response code="500">Si ocurre un error al procesar el checkout</response>
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<CheckoutResponseDto>> ProcesarCheckout()

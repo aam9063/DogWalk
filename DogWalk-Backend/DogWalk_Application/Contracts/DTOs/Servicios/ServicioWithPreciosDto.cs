@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace DogWalk_Application.Contracts.DTOs.Servicios
 {
+    /// <summary>
+    /// DTO para representar un servicio con sus precios.
+    /// </summary>
     public class ServicioWithPreciosDto
     {
         public Guid Id { get; set; }
@@ -15,6 +18,9 @@ namespace DogWalk_Application.Contracts.DTOs.Servicios
         public decimal PrecioPromedio { get; set; }
     }
 
+    /// <summary>
+    /// DTO para representar un precio de un paseador.
+    /// </summary>
     public class PrecioPaseadorDto
     {
         public Guid PaseadorId { get; set; }

@@ -1,5 +1,8 @@
 namespace DogWalk_Application.Contracts.DTOs.Admin
 {
+    /// <summary>
+    /// DTO para crear un nuevo administrador.
+    /// </summary>
     public class CreateAdminDto
     {
         public string Dni { get; set; }

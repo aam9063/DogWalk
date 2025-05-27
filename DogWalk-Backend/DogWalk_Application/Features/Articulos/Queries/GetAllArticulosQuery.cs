@@ -6,6 +6,9 @@ using MediatR;
 
 namespace DogWalk_Application.Features.Articulos.Queries;
 
+/// <summary>
+/// Consulta para obtener todos los artículos.
+/// </summary>
 public class GetAllArticulosQuery : IRequest<ResultadoPaginadoDto<ArticuloDto>>
 {
     public int PageNumber { get; set; } = 1;

@@ -12,18 +12,33 @@ using Microsoft.Extensions.Logging;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja todas las operaciones relacionadas con las valoraciones de paseadores.
+    /// Incluye la gestión de puntuaciones, comentarios y estadísticas de valoración.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class RankingPaseadorController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor del controlador de valoraciones.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo para acceso a datos</param>
         public RankingPaseadorController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
-        // GET: api/RankingPaseador/paseador/{paseadorId}
+        /// <summary>
+        /// Obtiene todas las valoraciones de un paseador específico.
+        /// </summary>
+        /// <param name="paseadorId">ID del paseador</param>
+        /// <returns>Lista de valoraciones del paseador</returns>
+        /// <response code="200">Retorna la lista de valoraciones</response>
+        /// <response code="404">Si el paseador no se encuentra</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet("paseador/{paseadorId}")]
         [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<RankingPaseadorDto>>> GetValoracionesPaseador(Guid paseadorId)
@@ -62,7 +77,14 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // GET: api/RankingPaseador/resumen/{paseadorId}
+        /// <summary>
+        /// Obtiene un resumen estadístico de las valoraciones de un paseador.
+        /// </summary>
+        /// <param name="paseadorId">ID del paseador</param>
+        /// <returns>Resumen estadístico de valoraciones</returns>
+        /// <response code="200">Retorna el resumen de valoraciones</response>
+        /// <response code="404">Si el paseador no se encuentra</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet("resumen/{paseadorId}")]
         [AllowAnonymous]
         public async Task<ActionResult<ResumenValoracionesDto>> GetResumenValoraciones(Guid paseadorId)
@@ -113,7 +135,16 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // POST: api/RankingPaseador
+        /// <summary>
+        /// Crea una nueva valoración para un paseador.
+        /// </summary>
+        /// <param name="dto">Datos de la valoración</param>
+        /// <returns>Confirmación de la creación</returns>
+        /// <response code="200">Si la valoración se creó correctamente</response>
+        /// <response code="400">Si los datos son inválidos o el usuario no puede valorar al paseador</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="404">Si el paseador no se encuentra</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpPost]
         [Authorize]
         public async Task<ActionResult> CrearValoracion(CrearRankingPaseadorDto dto)
@@ -194,7 +225,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // DELETE: api/RankingPaseador/{id}
+        /// <summary>
+        /// Elimina una valoración existente.
+        /// </summary>
+        /// <param name="id">ID de la valoración a eliminar</param>
+        /// <returns>Confirmación de la eliminación</returns>
+        /// <response code="200">Si la valoración se eliminó correctamente</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para eliminar esta valoración</response>
+        /// <response code="404">Si la valoración no se encuentra</response>
         [HttpDelete("{id}")]
         [Authorize]
         public async Task<ActionResult> EliminarValoracion(Guid id)

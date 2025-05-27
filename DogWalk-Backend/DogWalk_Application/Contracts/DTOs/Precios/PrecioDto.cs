@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Precios
 {
+    /// <summary>
+    /// DTO para representar un precio.
+    /// </summary>
     public class PrecioDto
     {
         public Guid Id { get; set; }
@@ -12,6 +15,9 @@ namespace DogWalk_Application.Contracts.DTOs.Precios
         public decimal Precio { get; set; }
     }
 
+    /// <summary>
+    /// DTO para actualizar un precio.
+    /// </summary>
     public class ActualizarPrecioDto
     {
         public Guid PaseadorId { get; set; }

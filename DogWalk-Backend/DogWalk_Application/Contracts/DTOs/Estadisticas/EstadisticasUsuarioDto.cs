@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Estadisticas
 {
+    /// <summary>
+    /// DTO para representar las estadísticas de un usuario.
+    /// </summary>
     public class EstadisticasUsuarioDto
     {
         public int TotalReservas { get; set; }

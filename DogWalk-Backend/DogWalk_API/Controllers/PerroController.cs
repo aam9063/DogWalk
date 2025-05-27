@@ -13,18 +13,32 @@ using DogWalk_Domain.Common.Enums;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja todas las operaciones relacionadas con los perros de los usuarios.
+    /// Incluye gestión de perfiles de perros, fotos y opiniones.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class PerroController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor del controlador de perros.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo para acceso a datos</param>
         public PerroController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
-        // Obtener todos los perros del usuario autenticado
+        /// <summary>
+        /// Obtiene todos los perros del usuario autenticado.
+        /// </summary>
+        /// <returns>Lista de perros del usuario</returns>
+        /// <response code="200">Retorna la lista de perros</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetPerros()
@@ -54,7 +68,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Obtener un perro específico por ID
+        /// <summary>
+        /// Obtiene los detalles de un perro específico.
+        /// </summary>
+        /// <param name="id">ID del perro</param>
+        /// <returns>Detalles completos del perro incluyendo opiniones</returns>
+        /// <response code="200">Retorna los detalles del perro</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para ver este perro</response>
+        /// <response code="404">Si el perro no se encuentra</response>
         [HttpGet("{id}")]
         [Authorize]
         public async Task<IActionResult> GetPerroById(Guid id)
@@ -111,7 +133,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Crear un nuevo perro
+        /// <summary>
+        /// Crea un nuevo perro para el usuario autenticado.
+        /// </summary>
+        /// <param name="dto">Datos del nuevo perro</param>
+        /// <returns>Detalles del perro creado</returns>
+        /// <response code="201">Si el perro se creó correctamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si intenta crear un perro para otro usuario sin ser administrador</response>
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> CreatePerro([FromBody] CreatePerroDto dto)
@@ -164,7 +194,16 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Actualizar un perro existente
+        /// <summary>
+        /// Actualiza los datos de un perro existente.
+        /// </summary>
+        /// <param name="dto">Datos actualizados del perro</param>
+        /// <returns>Confirmación de la actualización</returns>
+        /// <response code="200">Si el perro se actualizó correctamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para actualizar este perro</response>
+        /// <response code="404">Si el perro no se encuentra</response>
         [HttpPut]
         [Authorize]
         public async Task<IActionResult> UpdatePerro([FromBody] UpdatePerroDto dto)
@@ -222,7 +261,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Eliminar un perro
+        /// <summary>
+        /// Elimina un perro del sistema.
+        /// </summary>
+        /// <param name="id">ID del perro a eliminar</param>
+        /// <returns>Confirmación de la eliminación</returns>
+        /// <response code="200">Si el perro se eliminó correctamente</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para eliminar este perro</response>
+        /// <response code="404">Si el perro no se encuentra</response>
         [HttpDelete("{id}")]
         [Authorize]
         public async Task<IActionResult> DeletePerro(Guid id)
@@ -266,7 +313,18 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Subir foto de perro
+        /// <summary>
+        /// Sube una nueva foto para un perro.
+        /// </summary>
+        /// <param name="id">ID del perro</param>
+        /// <param name="foto">Archivo de la foto</param>
+        /// <param name="descripcion">Descripción opcional de la foto</param>
+        /// <returns>Detalles de la foto subida</returns>
+        /// <response code="200">Si la foto se subió correctamente</response>
+        /// <response code="400">Si el archivo no es válido</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para subir fotos a este perro</response>
+        /// <response code="404">Si el perro no se encuentra</response>
         [HttpPost("{id}/foto")]
         [Authorize]
         [Consumes("multipart/form-data")]
@@ -318,7 +376,16 @@ namespace DogWalk_API.Controllers
             }
         }
         
-        // Actualizar descripción de foto
+        /// <summary>
+        /// Actualiza la descripción de una foto de perro.
+        /// </summary>
+        /// <param name="fotoId">ID de la foto</param>
+        /// <param name="descripcion">Nueva descripción</param>
+        /// <returns>Confirmación de la actualización</returns>
+        /// <response code="200">Si la descripción se actualizó correctamente</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para actualizar esta foto</response>
+        /// <response code="404">Si la foto no se encuentra</response>
         [HttpPut("foto/{fotoId}/descripcion")]
         [Authorize]
         public async Task<IActionResult> UpdateFotoDescripcion(Guid fotoId, [FromBody] string descripcion)
@@ -327,7 +394,6 @@ namespace DogWalk_API.Controllers
             {
                 var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
                 
-                // Tendremos que buscar la foto de otra manera
                 // Primero obtener todos los perros del usuario
                 var perros = await _unitOfWork.Perros.GetByUsuarioIdAsync(userId);
                 
@@ -369,7 +435,15 @@ namespace DogWalk_API.Controllers
             }
         }
         
-        // Eliminar foto
+        /// <summary>
+        /// Elimina una foto de un perro.
+        /// </summary>
+        /// <param name="fotoId">ID de la foto a eliminar</param>
+        /// <returns>Confirmación de la eliminación</returns>
+        /// <response code="200">Si la foto se eliminó correctamente</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para eliminar esta foto</response>
+        /// <response code="404">Si la foto no se encuentra</response>
         [HttpDelete("foto/{fotoId}")]
         [Authorize]
         public async Task<IActionResult> DeleteFoto(Guid fotoId)
@@ -430,7 +504,12 @@ namespace DogWalk_API.Controllers
             }
         }
         
-        // Método auxiliar para guardar foto
+        /// <summary>
+        /// Guarda una foto en el sistema de archivos.
+        /// </summary>
+        /// <param name="foto">Archivo de la foto</param>
+        /// <param name="perroId">ID del perro</param>
+        /// <returns>URL de la foto guardada</returns>
         private async Task<string> GuardarFotoAsync(IFormFile foto, Guid perroId)
         {
             // Implementación depende de tu sistema de almacenamiento (local, Azure, AWS, etc.)
@@ -455,7 +534,10 @@ namespace DogWalk_API.Controllers
             return $"/uploads/perros/{fileName}";
         }
         
-        // Método auxiliar para eliminar archivo físico
+        /// <summary>
+        /// Elimina un archivo de foto del sistema de archivos.
+        /// </summary>
+        /// <param name="urlFoto">URL de la foto a eliminar</param>
         private void EliminarArchivoFoto(string urlFoto)
         {
             try

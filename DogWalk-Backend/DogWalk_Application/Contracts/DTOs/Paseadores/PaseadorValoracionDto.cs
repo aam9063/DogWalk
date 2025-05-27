@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Paseadores;
 
+/// <summary>
+/// DTO para representar una valoración de un paseador.
+/// </summary>
 public class PaseadorValoracionDto
 {
     public Guid Id { get; set; }

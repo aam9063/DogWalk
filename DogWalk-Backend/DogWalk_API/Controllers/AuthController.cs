@@ -14,6 +14,9 @@ using System.Threading.Tasks;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja todas las operaciones relacionadas con la autenticación de usuarios.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -22,6 +25,12 @@ namespace DogWalk_API.Controllers
         private readonly IConfiguration _configuration;
         private readonly JwtProvider _jwtProvider;
 
+        /// <summary>
+        /// Constructor del controlador de autenticación.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo para acceso a datos</param>
+        /// <param name="configuration">Configuración de la aplicación</param>
+        /// <param name="jwtProvider">Proveedor de servicios JWT</param>
         public AuthController(IUnitOfWork unitOfWork, IConfiguration configuration, JwtProvider jwtProvider)
         {
             _unitOfWork = unitOfWork;
@@ -29,6 +38,14 @@ namespace DogWalk_API.Controllers
             _jwtProvider = jwtProvider;
         }
 
+        /// <summary>
+        /// Autentica a un usuario y genera tokens de acceso.
+        /// </summary>
+        /// <param name="loginDto">Datos de inicio de sesión del usuario</param>
+        /// <returns>Token JWT y refresh token si la autenticación es exitosa</returns>
+        /// <response code="200">Retorna los tokens si la autenticación es exitosa</response>
+        /// <response code="401">Si las credenciales son inválidas</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
@@ -102,6 +119,13 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Refresca un token JWT expirado usando un refresh token válido.
+        /// </summary>
+        /// <param name="request">Token de acceso expirado y refresh token</param>
+        /// <returns>Nuevo par de tokens si el refresh es exitoso</returns>
+        /// <response code="200">Retorna nuevos tokens si el refresh es exitoso</response>
+        /// <response code="400">Si los tokens son inválidos o el refresh token ha expirado</response>
         [HttpPost("refresh-token")]
         [AllowAnonymous]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
@@ -181,6 +205,15 @@ namespace DogWalk_API.Controllers
             });
         }
 
+        /// <summary>
+        /// Revoca un refresh token específico.
+        /// </summary>
+        /// <param name="request">Refresh token a revocar</param>
+        /// <returns>Confirmación de la revocación del token</returns>
+        /// <response code="200">Si el token fue revocado exitosamente</response>
+        /// <response code="400">Si el request es inválido</response>
+        /// <response code="401">Si el usuario no está autorizado para revocar el token</response>
+        /// <response code="404">Si el token no fue encontrado</response>
         [HttpPost("revoke-token")]
         [Authorize]
         public async Task<IActionResult> RevokeToken([FromBody] RevokeTokenRequest request)
@@ -206,6 +239,13 @@ namespace DogWalk_API.Controllers
             return Ok(new { message = "Token revocado exitosamente" });
         }
 
+        /// <summary>
+        /// Endpoint de inicio de sesión directo (sin generación de tokens).
+        /// </summary>
+        /// <param name="loginDto">Credenciales del usuario</param>
+        /// <returns>Información básica del usuario si la autenticación es exitosa</returns>
+        /// <response code="200">Retorna la información del usuario si la autenticación es exitosa</response>
+        /// <response code="401">Si las credenciales son inválidas</response>
         [HttpPost("login-direct")]
         [AllowAnonymous]
         public async Task<IActionResult> LoginDirect([FromBody] LoginDto loginDto)
@@ -239,6 +279,13 @@ namespace DogWalk_API.Controllers
             });
         }
 
+        /// <summary>
+        /// Prueba la validez de una contraseña para un usuario.
+        /// </summary>
+        /// <param name="loginDto">Credenciales a probar</param>
+        /// <returns>Resultado de la validación de la contraseña</returns>
+        /// <response code="200">Retorna el resultado de la validación</response>
+        /// <response code="404">Si el usuario no existe</response>
         [HttpPost("test-password")]
         [AllowAnonymous]
         public async Task<IActionResult> TestPassword([FromBody] LoginDto loginDto)
@@ -282,6 +329,14 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Permite a un administrador restablecer la contraseña de un usuario.
+        /// </summary>
+        /// <param name="resetDto">Datos para el restablecimiento de contraseña</param>
+        /// <returns>Confirmación del restablecimiento de contraseña</returns>
+        /// <response code="200">Si la contraseña fue restablecida exitosamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="404">Si el usuario no existe</response>
         [HttpPost("admin/reset-password")]
         [AllowAnonymous] // Temporal para poder reiniciar contraseñas sin autenticación
         public async Task<IActionResult> AdminResetPassword([FromBody] ResetAdminPasswordDto resetDto)
@@ -317,6 +372,11 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Genera un token JWT para un usuario específico.
+        /// </summary>
+        /// <param name="user">Usuario para el cual generar el token</param>
+        /// <returns>Token JWT generado</returns>
         private string GenerateJwtToken(DogWalk_Domain.Entities.Usuario user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]));
@@ -341,7 +401,10 @@ namespace DogWalk_API.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        // Método auxiliar para generar refresh tokens
+        /// <summary>
+        /// Genera un nuevo refresh token.
+        /// </summary>
+        /// <returns>Refresh token generado</returns>
         private string GenerateRefreshToken()
         {
             var randomNumber = new byte[64];
@@ -352,7 +415,10 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Método para obtener la dirección IP del cliente
+        /// <summary>
+        /// Obtiene la dirección IP del cliente que realiza la solicitud.
+        /// </summary>
+        /// <returns>Dirección IP del cliente</returns>
         private string GetIpAddress()
         {
             if (Request.Headers.ContainsKey("X-Forwarded-For"))

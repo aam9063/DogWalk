@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Chat
 {
+    /// <summary>
+    /// DTO para representar un mensaje de chat.
+    /// </summary>
     public class ChatMensajeDto
     {
         public Guid Id { get; set; }

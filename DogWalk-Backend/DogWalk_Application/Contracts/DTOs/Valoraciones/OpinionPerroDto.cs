@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Valoraciones
 {
+    /// <summary>
+    /// DTO para representar una opinión de un perro.
+    /// </summary>
     public class OpinionPerroDto
     {
         public Guid Id { get; set; }

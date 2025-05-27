@@ -13,18 +13,31 @@ using System.Threading.Tasks;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja todas las operaciones relacionadas con los servicios de paseo.
+    /// Incluye gestión de tipos de servicios y sus precios de referencia.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class ServicioController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor del controlador de servicios.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo para acceso a datos</param>
         public ServicioController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
-        // Obtener todos los servicios (público)
+        /// <summary>
+        /// Obtiene todos los servicios disponibles.
+        /// </summary>
+        /// <returns>Lista de servicios con sus precios de referencia</returns>
+        /// <response code="200">Retorna la lista de servicios</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetServicios()
@@ -50,7 +63,11 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Método auxiliar para calcular precios de referencia
+        /// <summary>
+        /// Calcula el precio de referencia para un tipo de servicio.
+        /// </summary>
+        /// <param name="tipoServicio">Tipo de servicio</param>
+        /// <returns>Precio de referencia calculado</returns>
         private decimal ObtenerPrecioReferencia(string tipoServicio)
         {
             return tipoServicio switch
@@ -62,7 +79,14 @@ namespace DogWalk_API.Controllers
             };
         }
 
-        // Obtener servicio por ID
+        /// <summary>
+        /// Obtiene los detalles de un servicio específico.
+        /// </summary>
+        /// <param name="id">ID del servicio</param>
+        /// <returns>Detalles del servicio</returns>
+        /// <response code="200">Retorna los detalles del servicio</response>
+        /// <response code="404">Si el servicio no se encuentra</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet("{id}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetServicioById(Guid id)
@@ -92,7 +116,12 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Obtener servicios con precios de todos los paseadores
+        /// <summary>
+        /// Obtiene todos los servicios con sus precios por paseador.
+        /// </summary>
+        /// <returns>Lista de servicios con estadísticas de precios</returns>
+        /// <response code="200">Retorna la lista de servicios con precios</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet("with-precios")]
         [AllowAnonymous]
         public async Task<IActionResult> GetServiciosWithPrecios()
@@ -145,7 +174,15 @@ namespace DogWalk_API.Controllers
 
         // Endpoints de administración (solo para administradores)
         
-        // Crear nuevo servicio
+        /// <summary>
+        /// Crea un nuevo servicio (solo administradores).
+        /// </summary>
+        /// <param name="createDto">Datos del nuevo servicio</param>
+        /// <returns>Detalles del servicio creado</returns>
+        /// <response code="201">Si el servicio se creó correctamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no es administrador</response>
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> CreateServicio([FromBody] CreateServicioDto createDto)
@@ -183,7 +220,17 @@ namespace DogWalk_API.Controllers
             }
         }
         
-        // Actualizar servicio existente
+        /// <summary>
+        /// Actualiza un servicio existente (solo administradores).
+        /// </summary>
+        /// <param name="id">ID del servicio</param>
+        /// <param name="updateDto">Datos actualizados del servicio</param>
+        /// <returns>Confirmación de la actualización</returns>
+        /// <response code="200">Si el servicio se actualizó correctamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no es administrador</response>
+        /// <response code="404">Si el servicio no se encuentra</response>
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> UpdateServicio(Guid id, [FromBody] UpdateServicioDto updateDto)
@@ -225,7 +272,15 @@ namespace DogWalk_API.Controllers
             }
         }
         
-        // Eliminar servicio (solo si no está en uso)
+        /// <summary>
+        /// Elimina un servicio existente (solo administradores).
+        /// </summary>
+        /// <param name="id">ID del servicio a eliminar</param>
+        /// <returns>Confirmación de la eliminación</returns>
+        /// <response code="200">Si el servicio se eliminó correctamente</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no es administrador</response>
+        /// <response code="404">Si el servicio no se encuentra</response>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteServicio(Guid id)
@@ -255,7 +310,12 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // DogWalk_API/Controllers/ServicioController.cs - Agregar este endpoint
+        /// <summary>
+        /// Obtiene los filtros disponibles para servicios.
+        /// </summary>
+        /// <returns>Lista de filtros y opciones disponibles</returns>
+        /// <response code="200">Retorna los filtros disponibles</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet("filtros")]
         [AllowAnonymous]
         public async Task<ActionResult> GetServiciosFiltros()

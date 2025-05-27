@@ -12,18 +12,30 @@ using System.Threading.Tasks;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador para gestionar los artículos.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class ArticuloController : ControllerBase
     {
         private readonly IMediator _mediator;
-        
+
+        /// <summary>
+        /// Constructor del controlador de artículos.
+        /// </summary>
+        /// <param name="mediator">Mediador para la comunicación entre componentes</param>
         public ArticuloController(IMediator mediator)
         {
             _mediator = mediator;
         }
         
-        // GET: api/Articulo
+        /// <summary>
+        /// Obtiene todos los artículos.
+        /// </summary>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="200">Si los artículos se obtuvieron correctamente</response>
+        /// <response code="500">Si ocurre un error al obtener los artículos</response>
         [HttpGet]
         public async Task<ActionResult<ResultadoPaginadoDto<ArticuloDto>>> GetArticulos(
             [FromQuery] int pageNumber = 1,
@@ -59,8 +71,14 @@ namespace DogWalk_API.Controllers
                 
             return Ok(resultado);
         }
+
+        /// <summary>
+        /// Obtiene todos los artículos por categoría.
+        /// </summary>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="200">Si los artículos se obtuvieron correctamente</response>
+        /// <response code="500">Si ocurre un error al obtener los artículos</response>
         
-        // GET: api/Articulo/categoria/{categoria}
         [HttpGet("categoria/{categoria}")]
         public async Task<ActionResult<ResultadoPaginadoDto<ArticuloDto>>> GetArticulosPorCategoria(
             CategoriaArticulo categoria,
@@ -82,7 +100,13 @@ namespace DogWalk_API.Controllers
             return Ok(resultado);
         }
         
-        // POST: api/Articulo
+        /// <summary>
+        /// Crea un nuevo artículo.
+        /// </summary>
+        /// <param name="createArticuloDto">Datos del artículo a crear</param>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="201">Si el artículo se creó correctamente</response>
+        /// <response code="400">Si el artículo no se creó correctamente</response>
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<Guid>> CreateArticulo(CreateArticuloDto createArticuloDto)
@@ -93,7 +117,12 @@ namespace DogWalk_API.Controllers
             return CreatedAtAction(nameof(GetArticulo), new { id = resultado }, resultado);
         }
         
-        // POST: api/Articulo/batch
+        /// <summary>
+        /// Crea un nuevo artículo.
+        /// </summary>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="201">Si el artículo se creó correctamente</response>
+        /// <response code="400">Si el artículo no se creó correctamente</response>
         [HttpPost("batch")]
         [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<IEnumerable<Guid>>> CreateArticulosBatch(List<CreateArticuloDto> createArticuloDtos)
@@ -110,7 +139,14 @@ namespace DogWalk_API.Controllers
             return Ok(resultados);
         }
         
-        // PUT: api/Articulo/{id}
+        /// <summary>
+        /// Actualiza un artículo existente.
+        /// </summary>
+        /// <param name="id">ID del artículo a actualizar</param>
+        /// <param name="updateArticuloDto">Datos del artículo a actualizar</param>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="204">Si el artículo se actualizó correctamente</response>
+
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> UpdateArticulo(Guid id, UpdateArticuloDto updateArticuloDto)
@@ -143,7 +179,13 @@ namespace DogWalk_API.Controllers
             return NoContent();
         }
         
-        // PATCH: api/Articulo/{id}/stock
+        /// <summary>
+        /// Actualiza el stock de un artículo.
+        /// </summary>
+        /// <param name="id">ID del artículo a actualizar</param>
+        /// <param name="cantidad">Cantidad de stock a actualizar</param>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="204">Si el stock se actualizó correctamente</response>
         [HttpPatch("{id}/stock")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> UpdateStock(Guid id, [FromBody] int cantidad)

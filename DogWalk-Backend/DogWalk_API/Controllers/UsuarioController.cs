@@ -13,18 +13,33 @@ using System.Threading.Tasks;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja todas las operaciones relacionadas con los usuarios regulares.
+    /// Incluye registro, gestión de perfil, y operaciones de usuario.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class UsuarioController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor del controlador de usuarios.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo para acceso a datos</param>
         public UsuarioController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
-        // Registro de usuarios (público)
+        /// <summary>
+        /// Registra un nuevo usuario en el sistema.
+        /// </summary>
+        /// <param name="registerDto">Datos de registro del usuario</param>
+        /// <returns>Confirmación del registro y ID del usuario creado</returns>
+        /// <response code="200">Si el usuario se registró correctamente</response>
+        /// <response code="400">Si los datos son inválidos o el email ya está registrado</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
@@ -72,7 +87,14 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Obtener perfil de usuario (protegido)
+        /// <summary>
+        /// Obtiene el perfil completo del usuario autenticado.
+        /// </summary>
+        /// <returns>Información detallada del perfil del usuario, incluyendo perros y reservas</returns>
+        /// <response code="200">Retorna el perfil completo del usuario</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="404">Si el usuario no se encuentra</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet("profile")]
         [Authorize]
         public async Task<IActionResult> GetProfile()
@@ -120,7 +142,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Actualizar perfil (protegido)
+        /// <summary>
+        /// Actualiza el perfil del usuario autenticado.
+        /// </summary>
+        /// <param name="updateDto">Datos actualizados del usuario</param>
+        /// <returns>Perfil actualizado del usuario</returns>
+        /// <response code="200">Si el perfil se actualizó correctamente</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="404">Si el usuario no se encuentra</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpPut("profile")]
         [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateUsuarioDto updateDto)
@@ -182,7 +212,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Cambiar contraseña (protegido)
+        /// <summary>
+        /// Cambia la contraseña del usuario autenticado.
+        /// </summary>
+        /// <param name="changeDto">Datos para el cambio de contraseña</param>
+        /// <returns>Confirmación del cambio de contraseña</returns>
+        /// <response code="200">Si la contraseña se cambió correctamente</response>
+        /// <response code="400">Si las contraseñas no coinciden o la contraseña actual es incorrecta</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="404">Si el usuario no se encuentra</response>
         [HttpPost("change-password")]
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto changeDto)
@@ -223,6 +261,14 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtiene las estadísticas y métricas del dashboard del usuario.
+        /// </summary>
+        /// <returns>Estadísticas del usuario incluyendo reservas, perros y gastos</returns>
+        /// <response code="200">Retorna las estadísticas del dashboard</response>
+        /// <response code="401">Si el usuario no está autenticado o no tiene el rol correcto</response>
+        /// <response code="404">Si el usuario no se encuentra</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet("dashboard")]
         [Authorize(Roles = "Usuario")]
         public async Task<IActionResult> GetDashboard()

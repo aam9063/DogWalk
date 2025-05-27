@@ -8,16 +8,27 @@ using System.Threading.Tasks;
 
 namespace DogWalk_Application.Services;
 
+/// <summary>
+/// Servicio para la administración de usuarios y datos del dashboard.
+/// </summary>
 public class AdminService
 {
     private readonly IUnitOfWork _unitOfWork;
 
+    /// <summary>
+    /// Constructor para el servicio de administración.
+    /// </summary>
+    /// <param name="unitOfWork">Unidad de trabajo.</param>
     public AdminService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
     }
 
-    // Crear un usuario administrador
+    /// <summary>
+    /// Crea un usuario administrador.
+    /// </summary>
+    /// <param name="createAdminDto">Datos del usuario administrador a crear.</param>
+    /// <returns>ID del usuario administrador creado.</returns>
     public async Task<Guid> CreateAdminUser(CreateAdminDto createAdminDto)
     {
         // Verificar si el email ya existe

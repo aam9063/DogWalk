@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Busqueda;
 
+/// <summary>
+/// DTO para representar los parámetros de paginación.
+/// </summary>
 public class PaginacionParams
 {
     private const int MaxPageSize = 50;

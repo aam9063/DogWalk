@@ -11,15 +11,27 @@ using System.Threading.Tasks;
 
 namespace DogWalk_Application.Features.Articulos.Queries
 {
+    /// <summary>
+    /// Manejador para obtener todos los artículos.
+    /// </summary>
     public class GetAllArticulosQueryHandler : IRequestHandler<GetAllArticulosQuery, ResultadoPaginadoDto<ArticuloDto>>
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor para el manejador de consultas de artículos.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo.</param>
         public GetAllArticulosQueryHandler(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Maneja la consulta para obtener todos los artículos.
+        /// </summary>
+        /// <param name="request">Consulta para obtener todos los artículos.</param>
+        /// <param name="cancellationToken">Token de cancelación.</param>
         public async Task<ResultadoPaginadoDto<ArticuloDto>> Handle(GetAllArticulosQuery request, CancellationToken cancellationToken)
         {
             // Crear expresión de filtro base

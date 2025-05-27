@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Reservas;
 
+/// <summary>
+/// DTO para representar una reserva.
+/// </summary>
 public class ReservaDto
 {
     public Guid Id { get; set; }

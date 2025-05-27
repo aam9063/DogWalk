@@ -3,6 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DogWalk_Application.Contracts.DTOs.Paseadores;
 
+/// <summary>
+/// DTO para actualizar el precio de un servicio.
+/// </summary>
 public class ActualizarPrecioDto
 {
     [Required]

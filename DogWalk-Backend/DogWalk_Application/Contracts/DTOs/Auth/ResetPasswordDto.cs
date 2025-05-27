@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Auth
 {
+    /// <summary>
+    /// DTO para restablecer la contraseña de un usuario.
+    /// </summary>
     public class ResetPasswordDto
     {
         public string Email { get; set; }

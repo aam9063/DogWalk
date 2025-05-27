@@ -8,6 +8,9 @@ using System.Text.Json;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador para la interacción con el asistente de IA.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class AsistenteController : ControllerBase

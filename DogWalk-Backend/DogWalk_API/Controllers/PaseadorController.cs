@@ -23,6 +23,10 @@ using DogWalk_Application.Contracts.DTOs.Estadisticas;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja todas las operaciones relacionadas con los paseadores de perros.
+    /// Incluye registro, gestión de perfil, servicios, precios y disponibilidad.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class PaseadorController : ControllerBase
@@ -31,6 +35,12 @@ namespace DogWalk_API.Controllers
         private readonly JwtProvider _jwtProvider;
         private readonly IMediator _mediator;
 
+        /// <summary>
+        /// Constructor del controlador de paseadores.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo para acceso a datos</param>
+        /// <param name="jwtProvider">Proveedor de servicios JWT</param>
+        /// <param name="mediator">Mediador para el patrón CQRS</param>
         public PaseadorController(IUnitOfWork unitOfWork, JwtProvider jwtProvider, IMediator mediator)
         {
             _unitOfWork = unitOfWork;
@@ -38,7 +48,14 @@ namespace DogWalk_API.Controllers
             _mediator = mediator;
         }
 
-        // Registro de paseadores (público)
+        /// <summary>
+        /// Registra un nuevo paseador en el sistema.
+        /// </summary>
+        /// <param name="dto">Datos de registro del paseador</param>
+        /// <returns>Token de autenticación y datos básicos del paseador registrado</returns>
+        /// <response code="200">Retorna el token y datos del paseador si el registro es exitoso</response>
+        /// <response code="400">Si los datos son inválidos o el email ya está registrado</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterPaseadorDto dto)
@@ -148,7 +165,13 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Obtener perfil de paseador (protegido)
+        /// <summary>
+        /// Obtiene el perfil completo del paseador autenticado.
+        /// </summary>
+        /// <returns>Información detallada del perfil del paseador, incluyendo valoraciones y servicios</returns>
+        /// <response code="200">Retorna el perfil completo del paseador</response>
+        /// <response code="404">Si el perfil del paseador no se encuentra</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
         [HttpGet("profile")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> GetProfile()
@@ -209,6 +232,13 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtiene el perfil público de un paseador específico.
+        /// </summary>
+        /// <param name="id">ID del paseador</param>
+        /// <returns>Información pública del perfil del paseador</returns>
+        /// <response code="200">Retorna el perfil público del paseador</response>
+        /// <response code="404">Si el paseador no se encuentra</response>
         [HttpGet("public/{id}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetPaseadorPublicProfile(Guid id)
@@ -277,6 +307,13 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtiene detalles específicos de un paseador, incluyendo servicios y disponibilidad.
+        /// </summary>
+        /// <param name="id">ID del paseador</param>
+        /// <returns>Detalles completos del paseador</returns>
+        /// <response code="200">Retorna los detalles del paseador</response>
+        /// <response code="404">Si el paseador no se encuentra</response>
         [HttpGet("details/{id}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetPaseadorDetails(Guid id)
@@ -341,6 +378,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Actualiza el perfil del paseador autenticado.
+        /// </summary>
+        /// <param name="updateDto">Datos actualizados del paseador</param>
+        /// <returns>Confirmación de la actualización</returns>
+        /// <response code="200">Si el perfil se actualizó correctamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="404">Si el paseador no se encuentra</response>
         [HttpPut("profile")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdatePaseadorDto updateDto)
@@ -388,7 +434,14 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Actualizar precios (protegido)
+        /// <summary>
+        /// Actualiza los precios de los servicios del paseador.
+        /// </summary>
+        /// <param name="precios">Lista de precios actualizados</param>
+        /// <returns>Confirmación de la actualización de precios</returns>
+        /// <response code="200">Si los precios se actualizaron correctamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
         [HttpPut("precios")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> UpdatePrecios([FromBody] List<DogWalk_Application.Contracts.DTOs.Paseadores.ActualizarPrecioDto> precios)
@@ -445,7 +498,14 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Crear nuevo precio para un servicio
+        /// <summary>
+        /// Crea un nuevo precio para un servicio del paseador.
+        /// </summary>
+        /// <param name="dto">Datos del nuevo precio</param>
+        /// <returns>Confirmación de la creación del precio</returns>
+        /// <response code="200">Si el precio se creó correctamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
         [HttpPost("precios")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> CreatePrecio([FromBody] DogWalk_Application.Contracts.DTOs.Paseadores.ActualizarPrecioDto dto)
@@ -502,7 +562,14 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Criar disponibilidad (protegido)
+        /// <summary>
+        /// Crea una nueva disponibilidad horaria para el paseador.
+        /// </summary>
+        /// <param name="disponibilidadDto">Datos de la nueva disponibilidad</param>
+        /// <returns>Confirmación de la creación de la disponibilidad</returns>
+        /// <response code="200">Si la disponibilidad se creó correctamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
         [HttpPost("disponibilidad")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> CreateDisponibilidad([FromBody] CrearDisponibilidadDto disponibilidadDto)
@@ -558,7 +625,13 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Lista pública de paseadores (para usuarios)
+        /// <summary>
+        /// Obtiene una lista paginada de todos los paseadores.
+        /// </summary>
+        /// <param name="paginacionParams">Parámetros de paginación</param>
+        /// <returns>Lista paginada de paseadores</returns>
+        /// <response code="200">Retorna la lista de paseadores</response>
+        /// <response code="400">Si los parámetros de paginación son inválidos</response>
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetPaseadores([FromQuery] PaginacionParams paginacionParams)
@@ -606,7 +679,13 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Obtener reservas del paseador (protegido)
+        /// <summary>
+        /// Obtiene las reservas asociadas al paseador autenticado.
+        /// </summary>
+        /// <returns>Lista de reservas del paseador</returns>
+        /// <response code="200">Retorna la lista de reservas</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="404">Si el paseador no se encuentra</response>
         [HttpGet("reservas")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> GetReservas()
@@ -649,7 +728,23 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // DogWalk_API/Controllers/PaseadorController.cs - Agregar este endpoint
+        /// <summary>
+        /// Busca paseadores según criterios específicos.
+        /// </summary>
+        /// <param name="codigoPostal">Código postal para la búsqueda</param>
+        /// <param name="fechaEntrega">Fecha de entrega del perro</param>
+        /// <param name="fechaRecogida">Fecha de recogida del perro</param>
+        /// <param name="cantidadPerros">Cantidad de perros para el servicio</param>
+        /// <param name="servicioId">ID del servicio requerido</param>
+        /// <param name="latitud">Latitud para búsqueda por ubicación</param>
+        /// <param name="longitud">Longitud para búsqueda por ubicación</param>
+        /// <param name="distanciaMaxima">Distancia máxima en kilómetros (default: 10)</param>
+        /// <param name="valoracionMinima">Valoración mínima requerida</param>
+        /// <param name="pagina">Número de página (default: 1)</param>
+        /// <param name="elementosPorPagina">Elementos por página (default: 10)</param>
+        /// <returns>Lista paginada de paseadores que cumplen con los criterios</returns>
+        /// <response code="200">Retorna la lista de paseadores filtrada</response>
+        /// <response code="400">Si los parámetros de búsqueda son inválidos</response>
         [HttpGet("buscar")]
         [AllowAnonymous]
         public async Task<ActionResult<ResultadoPaginadoDto<PaseadorMapDto>>> BuscarPaseadores(
@@ -691,7 +786,13 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // En PaseadorController.cs - Añadir justo antes del último corchete de cierre de la clase
+        /// <summary>
+        /// Obtiene estadísticas del dashboard para el paseador autenticado.
+        /// </summary>
+        /// <returns>Estadísticas y métricas del paseador</returns>
+        /// <response code="200">Retorna las estadísticas del dashboard</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="404">Si el paseador no se encuentra</response>
         [HttpGet("dashboard")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> GetDashboard()

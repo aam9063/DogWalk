@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace DogWalk_Application.Contracts.DTOs.Paseadores;
 
+/// <summary>
+/// DTO para representar un paseador en el mapa.
+/// </summary>
 public class PaseadorMapDto
 {
     public Guid Id { get; set; }

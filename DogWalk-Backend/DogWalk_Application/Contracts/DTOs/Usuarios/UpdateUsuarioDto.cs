@@ -1,3 +1,8 @@
+namespace DogWalk_Application.Contracts.DTOs.Usuarios;
+
+/// <summary>
+/// DTO para actualizar un usuario.
+/// </summary>
 public class UpdateUsuarioDto
 {
     public string Nombre { get; set; }

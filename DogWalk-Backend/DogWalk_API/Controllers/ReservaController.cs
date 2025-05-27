@@ -12,18 +12,34 @@ using System.Threading.Tasks;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja todas las operaciones relacionadas con las reservas de paseos.
+    /// Incluye creación, gestión y seguimiento de reservas entre usuarios y paseadores.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class ReservaController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor del controlador de reservas.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo para acceso a datos</param>
         public ReservaController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
-        // Obtener todas las reservas del usuario autenticado
+        /// <summary>
+        /// Obtiene todas las reservas del usuario autenticado.
+        /// Si el usuario es paseador, obtiene sus reservas como paseador.
+        /// Si es usuario normal, obtiene sus reservas como cliente.
+        /// </summary>
+        /// <returns>Lista de reservas del usuario</returns>
+        /// <response code="200">Retorna la lista de reservas</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetReservas()
@@ -55,7 +71,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Obtener una reserva por ID
+        /// <summary>
+        /// Obtiene los detalles de una reserva específica.
+        /// </summary>
+        /// <param name="id">ID de la reserva</param>
+        /// <returns>Detalles completos de la reserva</returns>
+        /// <response code="200">Retorna los detalles de la reserva</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para ver esta reserva</response>
+        /// <response code="404">Si la reserva no se encuentra</response>
         [HttpGet("{id}")]
         [Authorize]
         public async Task<IActionResult> GetReservaById(Guid id)
@@ -144,7 +168,16 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Crear una nueva reserva
+        /// <summary>
+        /// Crea una nueva reserva de paseo.
+        /// </summary>
+        /// <param name="dto">Datos de la nueva reserva</param>
+        /// <returns>Detalles de la reserva creada</returns>
+        /// <response code="201">Si la reserva se creó correctamente</response>
+        /// <response code="400">Si los datos son inválidos o no hay disponibilidad</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para crear la reserva</response>
+        /// <response code="404">Si alguna entidad relacionada no se encuentra</response>
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> CreateReserva([FromBody] CreateReservaDto dto)
@@ -247,7 +280,16 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Actualizar estado de reserva
+        /// <summary>
+        /// Actualiza una reserva existente.
+        /// </summary>
+        /// <param name="dto">Datos actualizados de la reserva</param>
+        /// <returns>Confirmación de la actualización</returns>
+        /// <response code="200">Si la reserva se actualizó correctamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para actualizar esta reserva</response>
+        /// <response code="404">Si la reserva no se encuentra</response>
         [HttpPut]
         [Authorize]
         public async Task<IActionResult> UpdateReserva([FromBody] UpdateReservaDto dto)
@@ -368,7 +410,11 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Método auxiliar para mapear reservas a DTOs
+        /// <summary>
+        /// Convierte una lista de entidades Reserva a DTOs.
+        /// </summary>
+        /// <param name="reservas">Lista de reservas a convertir</param>
+        /// <returns>Lista de DTOs de reservas</returns>
         private async Task<List<ReservaDto>> MapReservasADtos(IEnumerable<Reserva> reservas)
         {
             var result = new List<ReservaDto>();
@@ -406,7 +452,14 @@ namespace DogWalk_API.Controllers
             return result;
         }
         
-        // Endpoint para obtener disponibilidad de un paseador
+        /// <summary>
+        /// Obtiene la disponibilidad horaria de un paseador para una fecha específica.
+        /// </summary>
+        /// <param name="paseadorId">ID del paseador</param>
+        /// <param name="fecha">Fecha opcional para filtrar la disponibilidad</param>
+        /// <returns>Lista de horarios disponibles</returns>
+        /// <response code="200">Retorna la lista de horarios disponibles</response>
+        /// <response code="404">Si el paseador no se encuentra</response>
         [HttpGet("disponibilidad/{paseadorId}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetDisponibilidadPaseador(Guid paseadorId, [FromQuery] DateTime? fecha = null)
@@ -456,7 +509,12 @@ namespace DogWalk_API.Controllers
             }
         }
         
-        // Obtener historial de reservas completadas
+        /// <summary>
+        /// Obtiene el historial completo de reservas del usuario.
+        /// </summary>
+        /// <returns>Lista de reservas históricas</returns>
+        /// <response code="200">Retorna el historial de reservas</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
         [HttpGet("historial")]
         [Authorize]
         public async Task<IActionResult> GetHistorialReservas()
@@ -491,7 +549,12 @@ namespace DogWalk_API.Controllers
             }
         }
         
-        // Obtener reservas pendientes y confirmadas (activas)
+        /// <summary>
+        /// Obtiene las reservas activas del usuario.
+        /// </summary>
+        /// <returns>Lista de reservas activas</returns>
+        /// <response code="200">Retorna la lista de reservas activas</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
         [HttpGet("activas")]
         [Authorize]
         public async Task<IActionResult> GetReservasActivas()
@@ -528,7 +591,16 @@ namespace DogWalk_API.Controllers
             }
         }
         
-        // Cancelar una reserva
+        /// <summary>
+        /// Cancela una reserva existente.
+        /// </summary>
+        /// <param name="id">ID de la reserva a cancelar</param>
+        /// <returns>Confirmación de la cancelación</returns>
+        /// <response code="200">Si la reserva se canceló correctamente</response>
+        /// <response code="400">Si la reserva no puede ser cancelada</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no tiene permiso para cancelar esta reserva</response>
+        /// <response code="404">Si la reserva no se encuentra</response>
         [HttpPost("{id}/cancelar")]
         [Authorize]
         public async Task<IActionResult> CancelarReserva(Guid id)
@@ -579,7 +651,16 @@ namespace DogWalk_API.Controllers
             }
         }
         
-        // Confirmar una reserva (solo paseador)
+        /// <summary>
+        /// Confirma una reserva pendiente (solo paseadores).
+        /// </summary>
+        /// <param name="id">ID de la reserva a confirmar</param>
+        /// <returns>Confirmación de la operación</returns>
+        /// <response code="200">Si la reserva se confirmó correctamente</response>
+        /// <response code="400">Si la reserva no puede ser confirmada</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no es el paseador asignado</response>
+        /// <response code="404">Si la reserva no se encuentra</response>
         [HttpPost("{id}/confirmar")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> ConfirmarReserva(Guid id)
@@ -620,7 +701,16 @@ namespace DogWalk_API.Controllers
             }
         }
         
-        // Completar una reserva (solo paseador)
+        /// <summary>
+        /// Marca una reserva como completada (solo paseadores).
+        /// </summary>
+        /// <param name="id">ID de la reserva a completar</param>
+        /// <returns>Confirmación de la operación</returns>
+        /// <response code="200">Si la reserva se completó correctamente</response>
+        /// <response code="400">Si la reserva no puede ser completada</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no es el paseador asignado</response>
+        /// <response code="404">Si la reserva no se encuentra</response>
         [HttpPost("{id}/completar")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> CompletarReserva(Guid id)
@@ -661,7 +751,11 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Método auxiliar para obtener la fecha de servicio desde DisponibilidadHoraria
+        /// <summary>
+        /// Obtiene la fecha de servicio de una disponibilidad.
+        /// </summary>
+        /// <param name="disponibilidadId">ID de la disponibilidad</param>
+        /// <returns>Fecha y hora del servicio</returns>
         private async Task<DateTime> ObtenerFechaServicioAsync(Guid disponibilidadId)
         {
             var disp = await _unitOfWork.DisponibilidadHoraria.GetByIdAsync(disponibilidadId);

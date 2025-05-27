@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Usuarios;
 
+/// <summary>
+/// DTO para representar un usuario administrador.
+/// </summary>
 public class AdminUsuarioDto
 {
     public Guid Id { get; set; }

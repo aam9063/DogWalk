@@ -1,3 +1,5 @@
+
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -25,6 +27,7 @@ using DogWalk_API.Middleware;
 using DogWalk_Infrastructure.Configuration;
 using DogWalk_Infrastructure.Services.OpenAI;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -39,7 +42,21 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "DogWalk API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { 
+        Title = "DogWalk API", 
+        Version = "v1",
+        Description = "API para la gestión de paseos de perros",
+        Contact = new OpenApiContact
+        {
+            Name = "Equipo DogWalk",
+            Email = "contacto@dogwalk.com"
+        }
+    });
+    
+    // Configuración para documentación XML
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
     
     // Configuración para JWT
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

@@ -7,15 +7,27 @@ using DogWalk_Domain.Common.Enums;
 
 namespace DogWalk_Application.Features.Admin.Commands
 {
+    /// <summary>
+    /// Manejador para eliminar un usuario.
+    /// </summary>
     public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand, bool>
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor para el manejador de comandos de eliminación de usuario.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo.</param>
         public DeleteUserCommandHandler(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Maneja el comando de eliminación de usuario.
+        /// </summary>
+        /// <param name="request">Comando de eliminación de usuario.</param>
+        /// <param name="cancellationToken">Token de cancelación.</param>
         public async Task<bool> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
         {
             var usuario = await _unitOfWork.Usuarios.GetByIdAsync(request.UserId);

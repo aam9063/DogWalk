@@ -11,12 +11,20 @@ using System.Threading.Tasks;
 
 namespace DogWalk_Infrastructure.Services.Stripe;
 
+/// <summary>
+/// Servicio para interactuar con Stripe.
+/// </summary>
 public class StripeService
 {
     private readonly string _apiKey;
     private readonly string _webhookSecret;
     private readonly ILogger<StripeService> _logger;
 
+    /// <summary>
+    /// Constructor del servicio Stripe.
+    /// </summary>
+    /// <param name="configuration">Configuración de la aplicación.</param>
+    /// <param name="logger">Logger para registrar mensajes.</param>
     public StripeService(IConfiguration configuration, ILogger<StripeService> logger)
     {
         _apiKey = configuration["Stripe:SecretKey"] ?? throw new ArgumentNullException("Stripe:SecretKey no está configurado");

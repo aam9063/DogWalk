@@ -11,18 +11,34 @@ using System.Threading.Tasks;
 
 namespace DogWalk_API.Controllers
 {
+    /// <summary>
+    /// Controlador que maneja todas las operaciones relacionadas con la disponibilidad horaria de los paseadores.
+    /// Incluye gestión de horarios, slots de tiempo y estados de disponibilidad.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class DisponibilidadHorariaController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Constructor del controlador de disponibilidad horaria.
+        /// </summary>
+        /// <param name="unitOfWork">Unidad de trabajo para acceso a datos</param>
         public DisponibilidadHorariaController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
-        // Obtener disponibilidad de un paseador (público)
+        /// <summary>
+        /// Obtiene la disponibilidad horaria de un paseador específico.
+        /// </summary>
+        /// <param name="paseadorId">ID del paseador</param>
+        /// <param name="fecha">Fecha opcional para filtrar la disponibilidad</param>
+        /// <returns>Disponibilidad horaria agrupada por días</returns>
+        /// <response code="200">Retorna la disponibilidad del paseador</response>
+        /// <response code="404">Si el paseador no se encuentra</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet("paseador/{paseadorId}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetDisponibilidadPaseador(Guid paseadorId, [FromQuery] DateTime? fecha = null)
@@ -83,7 +99,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Obtener mi disponibilidad (paseador autenticado)
+        /// <summary>
+        /// Obtiene la disponibilidad horaria del paseador autenticado.
+        /// </summary>
+        /// <param name="fecha">Fecha opcional para filtrar la disponibilidad</param>
+        /// <returns>Lista de slots de disponibilidad</returns>
+        /// <response code="200">Retorna la disponibilidad del paseador</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no es un paseador</response>
+        /// <response code="404">Si el perfil de paseador no se encuentra</response>
         [HttpGet("mis-horarios")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> GetMiDisponibilidad([FromQuery] DateTime? fecha = null)
@@ -133,7 +157,16 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Crear nueva disponibilidad (múltiples slots)
+        /// <summary>
+        /// Crea nuevos slots de disponibilidad horaria para el paseador autenticado.
+        /// </summary>
+        /// <param name="dto">Datos para crear los slots de disponibilidad</param>
+        /// <returns>Lista de slots de disponibilidad creados</returns>
+        /// <response code="200">Si los slots se crearon correctamente</response>
+        /// <response code="400">Si los datos son inválidos o las fechas no son correctas</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no es un paseador</response>
+        /// <response code="404">Si el perfil de paseador no se encuentra</response>
         [HttpPost]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> CrearDisponibilidad([FromBody] CrearDisponibilidadDto dto)
@@ -214,7 +247,16 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Actualizar estado de disponibilidad
+        /// <summary>
+        /// Actualiza el estado de un slot de disponibilidad horaria.
+        /// </summary>
+        /// <param name="dto">Datos para actualizar la disponibilidad</param>
+        /// <returns>Confirmación de la actualización</returns>
+        /// <response code="200">Si el slot se actualizó correctamente</response>
+        /// <response code="400">Si los datos son inválidos</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no es un paseador</response>
+        /// <response code="404">Si el slot no se encuentra</response>
         [HttpPut]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> ActualizarDisponibilidad([FromBody] ActualizarDisponibilidadDto dto)
@@ -279,7 +321,15 @@ namespace DogWalk_API.Controllers
             }
         }
 
-        // Eliminar disponibilidad (solo si no tiene reservas)
+        /// <summary>
+        /// Elimina un slot de disponibilidad horaria.
+        /// </summary>
+        /// <param name="id">ID del slot a eliminar</param>
+        /// <returns>Confirmación de la eliminación</returns>
+        /// <response code="200">Si el slot se eliminó correctamente</response>
+        /// <response code="401">Si el usuario no está autenticado</response>
+        /// <response code="403">Si el usuario no es un paseador</response>
+        /// <response code="404">Si el slot no se encuentra</response>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Paseador")]
         public async Task<IActionResult> EliminarDisponibilidad(Guid id)

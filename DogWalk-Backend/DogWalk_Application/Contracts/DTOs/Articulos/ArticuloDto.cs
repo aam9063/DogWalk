@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Articulos;
 
+/// <summary>
+/// DTO para representar un artículo.
+/// </summary>
 public class ArticuloDto
 {
     public Guid Id { get; set; }

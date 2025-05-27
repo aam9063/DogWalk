@@ -2,12 +2,18 @@ using DogWalk_Domain.Common.Enums;
 
 namespace DogWalk_Application.Contracts.DTOs.Carrito;
 
+/// <summary>
+/// DTO para representar la finalización de una compra.
+/// </summary>
 public class CheckoutDto
 {
     public MetodoPago MetodoPago { get; set; }
     public DireccionEnvioDto DireccionEnvio { get; set; }
 }
 
+/// <summary>
+/// DTO para representar una dirección de envío.
+/// </summary>
 public class DireccionEnvioDto
 {
     public string Nombre { get; set; }

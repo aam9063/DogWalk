@@ -17,8 +17,14 @@ using System.Security.Claims;
 
 namespace DogWalk_Infrastructure
 {
+    /// <summary>
+    /// Clase que contiene los métodos de extensión para agregar la infraestructura de la aplicación.
+    /// </summary>
     public static class DependencyInjection
     {
+        /// <summary>
+        /// Agrega la infraestructura de la aplicación.
+        /// </summary>
         public static IServiceCollection AddInfrastructure(
             this IServiceCollection services,
             IConfiguration configuration,

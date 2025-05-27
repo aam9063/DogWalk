@@ -9,11 +9,24 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DogWalk_Infrastructure.Persistence
 {
+    /// <summary>
+    /// Implementación del unit of work.
+    /// </summary>
     public class UnitOfWork : IUnitOfWork
     {
+        /// <summary>
+        /// Contexto de la base de datos.
+        /// </summary>
         private readonly DogWalkDbContext _context;
+
+        /// <summary>
+        /// Transacción de la base de datos.
+        /// </summary>
         private IDbContextTransaction _transaction;
-        
+
+        /// <summary>
+        /// Repositorio de usuarios.
+        /// </summary>
         private IUsuarioRepository _usuarioRepository;
         private IPaseadorRepository _paseadorRepository;
         private IPerroRepository _perroRepository;
@@ -27,6 +40,9 @@ namespace DogWalk_Infrastructure.Persistence
         private IRankingPaseadorRepository _rankingPaseadorRepository;
         private IRefreshTokenRepository _refreshTokenRepository;
 
+        /// <summary>
+        /// Constructor del unit of work.
+        /// </summary>
         public UnitOfWork(
             DogWalkDbContext context,
             IUsuarioRepository usuarios,
@@ -39,8 +55,15 @@ namespace DogWalk_Infrastructure.Persistence
             _articuloRepository = articulos;
             _refreshTokenRepository = refreshTokenRepository;
         }
-        
+
+        /// <summary>
+        /// Repositorio de usuarios.
+        /// </summary>
         public IUsuarioRepository Usuarios => _usuarioRepository ??= new UsuarioRepository(_context);
+
+        /// <summary>
+        /// Repositorio de paseadores.
+        /// </summary>
         public IPaseadorRepository Paseadores => _paseadorRepository ??= new PaseadorRepository(_context);
         public IPerroRepository Perros => _perroRepository ??= new PerroRepository(_context);
         public IServicioRepository Servicios => _servicioRepository ??= new ServicioRepository(_context);
@@ -53,13 +76,22 @@ namespace DogWalk_Infrastructure.Persistence
         public IRankingPaseadorRepository RankingPaseadores => _rankingPaseadorRepository ??= new RankingPaseadorRepository(_context);
         public IRefreshTokenRepository RefreshTokens => _refreshTokenRepository ??= new RefreshTokenRepository(_context);
 
+        /// <summary>
+        /// Contexto de la base de datos.
+        /// </summary>
         public DogWalkDbContext Context => _context;
-        
+
+        /// <summary>
+        /// Inicia una transacción.
+        /// </summary>
         public async Task BeginTransactionAsync()
         {
             _transaction = await _context.Database.BeginTransactionAsync();
         }
-        
+
+        /// <summary>
+        /// Confirma una transacción.
+        /// </summary>
         public async Task CommitTransactionAsync()
         {
             try
@@ -75,7 +107,10 @@ namespace DogWalk_Infrastructure.Persistence
                 }
             }
         }
-        
+
+        /// <summary>
+        /// Revierte una transacción.
+        /// </summary>
         public async Task RollbackTransactionAsync()
         {
             try
@@ -91,18 +126,27 @@ namespace DogWalk_Infrastructure.Persistence
                 }
             }
         }
-        
+
+        /// <summary>
+        /// Guarda los cambios en la base de datos.
+        /// </summary>
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return await _context.SaveChangesAsync(cancellationToken);
         }
-        
+
+        /// <summary>
+        /// Agrega una entidad a la base de datos.
+        /// </summary>
         public async Task<T> AddAsync<T>(T entity) where T : class
         {
             await _context.Set<T>().AddAsync(entity);
             return entity;
         }
-        
+
+        /// <summary>
+        /// Elimina una entidad de la base de datos.
+        /// </summary>
         public void Dispose()
         {
             _context.Dispose();
@@ -110,6 +154,9 @@ namespace DogWalk_Infrastructure.Persistence
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Obtiene el contexto de la base de datos.
+        /// </summary>
         public DbContext GetDbContext()
         {
             return _context;

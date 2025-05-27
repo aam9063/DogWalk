@@ -2,6 +2,9 @@ using System;
 
 namespace DogWalk_Application.Contracts.DTOs.Reservas;
 
+/// <summary>
+/// DTO para crear una nueva reserva.
+/// </summary>
 public class CreateReservaDto
 {
     public Guid PaseadorId { get; set; }

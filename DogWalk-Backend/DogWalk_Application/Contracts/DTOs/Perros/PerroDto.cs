@@ -1,5 +1,8 @@
 namespace DogWalk_Application.Contracts.DTOs.Perros
 {
+    /// <summary>
+    /// DTO para representar un perro.
+    /// </summary>
     public class PerroDto
     {
         public Guid Id { get; set; }

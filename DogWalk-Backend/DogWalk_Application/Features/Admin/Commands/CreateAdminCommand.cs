@@ -3,6 +3,9 @@ using System;
 
 namespace DogWalk_Application.Features.Admin.Commands
 {
+    /// <summary>
+    /// Comando para crear un nuevo administrador.
+    /// </summary>
     public class CreateAdminCommand : IRequest<Guid>
     {
         public string Email { get; set; }

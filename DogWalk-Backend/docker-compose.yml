@@ -24,10 +24,11 @@ services:
       - ./.containers/sqlserver:/var/opt/mssql/data
     ports:
       - 1433:1433
-    command: >
-      bash -c "
-        /opt/mssql/bin/sqlservr &
-        sleep 30s &&
-        /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 2ZE868Fru -i /scripts/init.sql &&
-        wait
-      "
+    healthcheck:
+      test: ["CMD", "sqlcmd", "-S", "localhost", "-U", "sa", "-P", "2ZE868Fru", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+      
+

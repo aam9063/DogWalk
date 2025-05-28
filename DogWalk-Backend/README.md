@@ -127,7 +127,7 @@ DogWalk-Backend/
 
 ## 📞 Contacto
 
-- Email: albert9063@email.com
+- Email: albert9063@gmail.com
 - LinkedIn: [Albert Alarcón Martínez](www.linkedin.com/in/albert-alarcón-martínez-04044a51)
 - Portfolio: [AlbertDev](https://codewithalbert.netlify.app/)
 

@@ -123,7 +123,7 @@ DogWalk-Backend/
 
 ## 👥 Autores
 
-- Tu Nombre - [AlbertDev](https://github.com/tu-usuario)
+- Tu Nombre - [AlbertDev](https://github.com/aam9063)
 
 ## 📞 Contacto
 

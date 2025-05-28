@@ -49,10 +49,30 @@ cd DogWalk_API
 dotnet run
 ```
 
-## 📚 Documentación API
+## 🗃️ Base de Datos y Migraciones
+
+El proyecto utiliza Entity Framework Core con migraciones para gestionar la base de datos. Para configurar la base de datos:
+
+1. Asegúrate de tener las herramientas de Entity Framework instaladas:
+```bash
+dotnet tool install --global dotnet-ef
+```
+
+2. Aplicar las migraciones existentes:
+```bash
+cd DogWalk_Infrastructure
+dotnet ef database update
+```
+
+3. Para crear una nueva migración (cuando se modifiquen las entidades):
+```bash
+dotnet ef migrations add NombreDeLaMigracion
+```
+
+## �� Documentación API
 La documentación completa de la API está disponible a través de Swagger UI en:
 ```
-http://localhost:[puerto]/swagger
+http://localhost:5204/swagger/index.html
 ```
 
 ## 📄 Documentación

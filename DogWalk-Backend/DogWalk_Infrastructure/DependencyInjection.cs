@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
+using System.Linq.Expressions;
 
 namespace DogWalk_Infrastructure
 {
@@ -34,7 +35,13 @@ namespace DogWalk_Infrastructure
             services.AddDbContext<DogWalkDbContext>(options =>
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection"),
-                    b => b.MigrationsAssembly(typeof(DogWalkDbContext).Assembly.FullName)));
+                    sqlOptions => {
+                        sqlOptions.CommandTimeout(120); // Aumentar timeout a 120 segundos
+                        sqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 3,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorNumbersToAdd: null);
+                    }));
             
             // Repositories
             services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));

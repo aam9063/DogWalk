@@ -6,6 +6,7 @@ using DogWalk_Domain.Interfaces.IRepositories;
 using DogWalk_Infrastructure.Services.Email;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace DogWalk_API.Controllers
@@ -107,21 +108,23 @@ namespace DogWalk_API.Controllers
                 if (dto.Cantidad <= 0)
                     return BadRequest("La cantidad debe ser mayor que cero");
 
-                await _unitOfWork.BeginTransactionAsync();
-
-                var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
-                if (usuario == null)
-                    return NotFound("Usuario no encontrado");
-
-                var articulo = await _unitOfWork.Articulos.GetByIdAsync(dto.ArticuloId);
-                if (articulo == null)
-                    return NotFound("Artículo no encontrado");
-
-                if (articulo.Stock < dto.Cantidad)
-                    return BadRequest("No hay suficiente stock disponible");
-
-                try
+                var strategy = _unitOfWork.CreateExecutionStrategy();
+                
+                var result = await strategy.ExecuteAsync(async () =>
                 {
+                    await _unitOfWork.BeginTransactionAsync();
+
+                    var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
+                    if (usuario == null)
+                        throw new Exception("Usuario no encontrado");
+
+                    var articulo = await _unitOfWork.Articulos.GetByIdAsync(dto.ArticuloId);
+                    if (articulo == null)
+                        throw new Exception("Artículo no encontrado");
+
+                    if (articulo.Stock < dto.Cantidad)
+                        throw new Exception("No hay suficiente stock disponible");
+
                     var itemExistente = usuario.Carrito
                         .FirstOrDefault(i => i.ArticuloId == dto.ArticuloId);
 
@@ -146,16 +149,19 @@ namespace DogWalk_API.Controllers
                     await _unitOfWork.SaveChangesAsync();
                     await _unitOfWork.CommitTransactionAsync();
 
-                    return Ok(new { mensaje = "Artículo agregado al carrito correctamente" });
-                }
-                catch (Exception)
-                {
-                    await _unitOfWork.RollbackTransactionAsync();
-                    throw;
-                }
+                    return true;
+                });
+
+                return Ok(new { mensaje = "Artículo agregado al carrito correctamente" });
             }
             catch (Exception ex)
             {
+                // Si la excepción contiene un mensaje específico de validación, lo devolvemos como BadRequest
+                if (ex.Message is "Usuario no encontrado" or "Artículo no encontrado")
+                    return NotFound(ex.Message);
+                if (ex.Message == "No hay suficiente stock disponible")
+                    return BadRequest(ex.Message);
+
                 return StatusCode(500, new { error = "Error al agregar al carrito", detalle = ex.Message });
             }
         }
@@ -176,37 +182,41 @@ namespace DogWalk_API.Controllers
                 if (dto.Cantidad <= 0)
                     return BadRequest("La cantidad debe ser mayor que cero");
 
-                await _unitOfWork.BeginTransactionAsync();
-
-                var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
-                if (usuario == null)
-                    return NotFound("Usuario no encontrado");
-
-                var itemCarrito = usuario.Carrito.FirstOrDefault(i => i.Id == dto.ItemCarritoId);
-                if (itemCarrito == null)
-                    return NotFound("Item no encontrado en el carrito");
-
-                // Verificar stock disponible
-                var articulo = itemCarrito.Articulo;
-                if (articulo != null && articulo.Stock < dto.Cantidad)
-                    return BadRequest("No hay suficiente stock disponible");
-
-                try
+                var strategy = _unitOfWork.CreateExecutionStrategy();
+                
+                await strategy.ExecuteAsync(async () =>
                 {
+                    await _unitOfWork.BeginTransactionAsync();
+
+                    var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
+                    if (usuario == null)
+                        throw new Exception("Usuario no encontrado");
+
+                    var itemCarrito = usuario.Carrito.FirstOrDefault(i => i.Id == dto.ItemCarritoId);
+                    if (itemCarrito == null)
+                        throw new Exception("Item no encontrado en el carrito");
+
+                    // Verificar stock disponible
+                    var articulo = itemCarrito.Articulo;
+                    if (articulo != null && articulo.Stock < dto.Cantidad)
+                        throw new Exception("No hay suficiente stock disponible");
+
                     itemCarrito.ActualizarCantidad(dto.Cantidad);
                     await _unitOfWork.SaveChangesAsync();
                     await _unitOfWork.CommitTransactionAsync();
 
-                    return Ok(new { mensaje = "Cantidad actualizada correctamente" });
-                }
-                catch (Exception)
-                {
-                    await _unitOfWork.RollbackTransactionAsync();
-                    throw;
-                }
+                    return true;
+                });
+
+                return Ok(new { mensaje = "Cantidad actualizada correctamente" });
             }
             catch (Exception ex)
             {
+                if (ex.Message is "Usuario no encontrado" or "Item no encontrado en el carrito")
+                    return NotFound(ex.Message);
+                if (ex.Message == "No hay suficiente stock disponible")
+                    return BadRequest(ex.Message);
+
                 return StatusCode(500, new { error = "Error al actualizar cantidad", detalle = ex.Message });
             }
         }
@@ -224,20 +234,30 @@ namespace DogWalk_API.Controllers
         {
             try
             {
-                await _unitOfWork.BeginTransactionAsync();
+                var strategy = _unitOfWork.CreateExecutionStrategy();
+                
+                await strategy.ExecuteAsync(async () =>
+                {
+                    await _unitOfWork.BeginTransactionAsync();
 
-                var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
-                if (usuario == null) return NotFound("Usuario no encontrado");
+                    var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
+                    if (usuario == null) 
+                        throw new Exception("Usuario no encontrado");
 
-                usuario.EliminarItemCarrito(itemCarritoId);
-                await _unitOfWork.SaveChangesAsync();
-                await _unitOfWork.CommitTransactionAsync();
+                    usuario.EliminarItemCarrito(itemCarritoId);
+                    await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.CommitTransactionAsync();
+
+                    return true;
+                });
 
                 return Ok(new { mensaje = "Artículo eliminado del carrito" });
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync();
+                if (ex.Message == "Usuario no encontrado")
+                    return NotFound(ex.Message);
+
                 return StatusCode(500, new { error = "Error al eliminar el artículo", detalle = ex.Message });
             }
         }
@@ -254,20 +274,30 @@ namespace DogWalk_API.Controllers
         {
             try
             {
-                await _unitOfWork.BeginTransactionAsync();
+                var strategy = _unitOfWork.CreateExecutionStrategy();
+                
+                await strategy.ExecuteAsync(async () =>
+                {
+                    await _unitOfWork.BeginTransactionAsync();
 
-                var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
-                if (usuario == null) return NotFound("Usuario no encontrado");
+                    var usuario = await _unitOfWork.Usuarios.GetByIdWithCarritoAsync(GetUserId());
+                    if (usuario == null) 
+                        throw new Exception("Usuario no encontrado");
 
-                usuario.VaciarCarrito();
-                await _unitOfWork.SaveChangesAsync();
-                await _unitOfWork.CommitTransactionAsync();
+                    usuario.VaciarCarrito();
+                    await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.CommitTransactionAsync();
+
+                    return true;
+                });
 
                 return Ok(new { mensaje = "Carrito vaciado correctamente" });
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync();
+                if (ex.Message == "Usuario no encontrado")
+                    return NotFound(ex.Message);
+
                 return StatusCode(500, new { error = "Error al vaciar el carrito", detalle = ex.Message });
             }
         }

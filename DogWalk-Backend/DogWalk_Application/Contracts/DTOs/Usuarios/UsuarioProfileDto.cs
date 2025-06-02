@@ -7,7 +7,7 @@ public class UsuarioProfileDto
     public string FotoPerfil { get; set; }
     public int CantidadPerros { get; set; }
     public int CantidadReservas { get; set; }
-    public List<PerroProfileDto> Perros { get; set; } // Nueva propiedad
+    public List<PerroProfileDto> Perros { get; set; } 
 }
 
 public class PerroProfileDto

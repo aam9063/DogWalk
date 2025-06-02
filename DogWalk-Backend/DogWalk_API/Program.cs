@@ -128,7 +128,6 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IPaseadorRepository, PaseadorRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-// ... otros repositorios
 
 
 
@@ -139,7 +138,6 @@ builder.Services.AddDbContext<DogWalkDbContext>(options =>
 
 // Registra servicios de la aplicación
 builder.Services.AddScoped<AdminService>();
-// ... otros servicios
 
 // Añade la configuración de MediatR
 builder.Services.AddMediatR(cfg => {
@@ -177,7 +175,6 @@ if (app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    // Inicialización de datos si es necesario
 }
 
 

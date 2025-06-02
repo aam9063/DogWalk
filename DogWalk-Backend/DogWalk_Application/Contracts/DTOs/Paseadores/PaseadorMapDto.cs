@@ -18,6 +18,5 @@ public class PaseadorMapDto
     public double Longitud { get; set; }
     public List<ServicioPrecioSimpleDto> Servicios { get; set; } = new List<ServicioPrecioSimpleDto>();
     public decimal PrecioBase { get; set; } // Precio más económico para mostrar
-    // Etiquetas para mostrar en la interfaz
     public List<string> Etiquetas { get; set; } = new List<string>();
 }

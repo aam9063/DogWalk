@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DogWalk_Domain.Interfaces.IRepositories;
 
@@ -93,4 +94,9 @@ public interface IUnitOfWork : IDisposable
     /// Agrega una entidad a la base de datos.
     /// </summary>
     Task<T> AddAsync<T>(T entity) where T : class;
+
+    /// <summary>
+    /// Crea una estrategia de ejecución.
+    /// </summary>
+    IExecutionStrategy CreateExecutionStrategy();
 }

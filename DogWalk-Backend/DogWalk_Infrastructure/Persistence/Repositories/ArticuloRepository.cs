@@ -6,6 +6,7 @@ using DogWalk_Domain.Entities;
 using DogWalk_Domain.Interfaces.IRepositories;
 using DogWalk_Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace DogWalk_Infrastructure.Persistence.Repositories;
 
@@ -64,5 +65,33 @@ public class ArticuloRepository : GenericRepository<Articulo>, IArticuloReposito
             .Include(a => a.Imagenes)
             .Where(a => ids.Contains(a.Id))
             .ToListAsync();
+    }
+
+    public virtual async Task<(IEnumerable<Articulo> Items, int TotalCount)> GetPagedAsync(
+        Expression<Func<Articulo, bool>> predicate, 
+        Expression<Func<Articulo, int>> orderBy, 
+        bool ascending = true, 
+        int pageNumber = 1, 
+        int pageSize = 10)
+    {
+        // Usar AsNoTracking para mejorar el rendimiento
+        var query = _dbSet.AsNoTracking();
+        
+        // Aplicar el predicado
+        if (predicate != null)
+            query = query.Where(predicate);
+        
+        // Obtener el total antes de aplicar la paginación
+        var totalCount = await query.CountAsync();
+        
+        // Aplicar ordenamiento y paginación
+        query = ascending ? query.OrderBy(orderBy) : query.OrderByDescending(orderBy);
+        
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+            
+        return (items, totalCount);
     }
 }

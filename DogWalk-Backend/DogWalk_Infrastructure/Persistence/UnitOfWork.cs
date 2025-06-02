@@ -161,5 +161,10 @@ namespace DogWalk_Infrastructure.Persistence
         {
             return _context;
         }
+
+        public IExecutionStrategy CreateExecutionStrategy()
+        {
+            return _context.Database.CreateExecutionStrategy();
+        }
     }
 }

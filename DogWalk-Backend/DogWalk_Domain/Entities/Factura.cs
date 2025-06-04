@@ -19,7 +19,7 @@ namespace DogWalk_Domain.Entities;
         private readonly List<DetalleFactura> _detalles = new();
         public IReadOnlyCollection<DetalleFactura> Detalles => _detalles.AsReadOnly();
         
-        private Factura() : base() { } // Para EF Core
+        private Factura() : base() { } 
         
         public Factura(
             Guid id,

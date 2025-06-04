@@ -15,6 +15,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
 using System.Linq.Expressions;
+using DogWalk_Application.Services;
+using DogWalk_Infrastructure.Services.PDF;
 
 namespace DogWalk_Infrastructure
 {
@@ -110,6 +112,10 @@ namespace DogWalk_Infrastructure
             // Servicio de Email
             services.Configure<EmailOptions>(configuration.GetSection("Email"));
             services.AddScoped<EmailService>();
+
+            // Servicio de PDF
+            services.AddScoped<IFacturaPdfService, FacturaPdfService>();
+
             
             return services;
         }

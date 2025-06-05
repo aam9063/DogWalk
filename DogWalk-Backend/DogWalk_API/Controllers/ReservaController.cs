@@ -126,15 +126,14 @@ namespace DogWalk_API.Controllers
                     FechaServicio = fechaServicio,
                     Estado = reserva.Estado.ToString(),
                     Precio = reserva.Precio.Cantidad,
-                    DireccionRecogida = "Dirección de recogida", // Esto debe venir de otro lado
-                    DireccionEntrega = "Dirección de entrega", // Esto debe venir de otro lado
-                    Notas = "Notas de la reserva", // Esto debe venir de otro lado
+                    DireccionRecogida = "Dirección de recogida", 
+                    DireccionEntrega = "Dirección de entrega", 
+                    Notas = "Notas de la reserva",
                     PuedeEditar = puedeEditar,
                     PuedeCancelar = puedeCancelar,
                     PuedeCompletar = puedeCompletar,
                     PuedeValorar = puedeValorar,
                     
-                    // Información relacionada
                     Usuario = new() { 
                         Id = usuario.Id, 
                         Nombre = usuario.Nombre, 
@@ -380,7 +379,6 @@ namespace DogWalk_API.Controllers
                 var perro = await _unitOfWork.Perros.GetByIdAsync(reserva.PerroId);
                 var servicio = await _unitOfWork.Servicios.GetByIdAsync(reserva.ServicioId);
                 
-                // Usar el método auxiliar en lugar de declarar una variable
                 var fechaServicio = await ObtenerFechaServicioAsync(reserva.DisponibilidadId);
                 
                 var reservaDto = new ReservaDto
@@ -398,8 +396,8 @@ namespace DogWalk_API.Controllers
                     FechaServicio = fechaServicio,
                     Estado = reserva.Estado.ToString(),
                     Precio = reserva.Precio.Cantidad,
-                    DireccionRecogida = dto.DireccionRecogida ?? "Dirección de recogida", // Esto debería venir de otro lado
-                    DireccionEntrega = dto.DireccionEntrega ?? "Dirección de entrega"    // Esto debería venir de otro lado
+                    DireccionRecogida = dto.DireccionRecogida ?? "Dirección de recogida", 
+                    DireccionEntrega = dto.DireccionEntrega ?? "Dirección de entrega" 
                 };
                 
                 return Ok(reservaDto);
@@ -426,7 +424,6 @@ namespace DogWalk_API.Controllers
                 var perro = await _unitOfWork.Perros.GetByIdAsync(reserva.PerroId);
                 var servicio = await _unitOfWork.Servicios.GetByIdAsync(reserva.ServicioId);
                 
-                // En lugar de declarar una variable, usar el método auxiliar
                 var fechaServicio = await ObtenerFechaServicioAsync(reserva.DisponibilidadId);
                 
                 result.Add(new ReservaDto
@@ -441,7 +438,7 @@ namespace DogWalk_API.Controllers
                     ServicioId = reserva.ServicioId,
                     NombreServicio = servicio.Nombre,
                     FechaReserva = reserva.FechaReserva,
-                    FechaServicio = fechaServicio, // Usar la fecha obtenida del método auxiliar
+                    FechaServicio = fechaServicio, 
                     Estado = reserva.Estado.ToString(),
                     Precio = reserva.Precio.Cantidad,
                     DireccionRecogida = "Dirección de recogida",

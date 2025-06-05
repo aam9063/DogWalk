@@ -240,96 +240,6 @@ namespace DogWalk_API.Controllers
         }
 
         /// <summary>
-        /// Endpoint de inicio de sesión directo (sin generación de tokens).
-        /// </summary>
-        /// <param name="loginDto">Credenciales del usuario</param>
-        /// <returns>Información básica del usuario si la autenticación es exitosa</returns>
-        /// <response code="200">Retorna la información del usuario si la autenticación es exitosa</response>
-        /// <response code="401">Si las credenciales son inválidas</response>
-        [HttpPost("login-direct")]
-        [AllowAnonymous]
-        public async Task<IActionResult> LoginDirect([FromBody] LoginDto loginDto)
-        {
-            // Obtener usuario por email
-            var user = await _unitOfWork.Usuarios.GetByEmailAsync(loginDto.Email);
-
-            if (user == null)
-            {
-                return Unauthorized(new { message = "Email o contraseña incorrectos" });
-            }
-
-            Console.WriteLine($"Usuario encontrado: {user.Id}, Nombre: {user.Nombre}");
-
-            // IMPORTANTE: Para propósitos de prueba, siempre autenticamos si el usuario existe
-            // ESTO ES TEMPORAL - SOLO PARA DESARROLLO/PRUEBAS
-            // En producción, siempre debes verificar la contraseña correctamente
-
-            // Generar token JWT sin verificar la contraseña
-            var token = GenerateJwtToken(user);
-
-            return Ok(new
-            {
-                success = true,
-                token = token,
-                userId = user.Id,
-                email = user.Email.ToString(),
-                nombre = user.Nombre,
-                apellido = user.Apellido,
-                rol = user.Rol.ToString()
-            });
-        }
-
-        /// <summary>
-        /// Prueba la validez de una contraseña para un usuario.
-        /// </summary>
-        /// <param name="loginDto">Credenciales a probar</param>
-        /// <returns>Resultado de la validación de la contraseña</returns>
-        /// <response code="200">Retorna el resultado de la validación</response>
-        /// <response code="404">Si el usuario no existe</response>
-        [HttpPost("test-password")]
-        [AllowAnonymous]
-        public async Task<IActionResult> TestPassword([FromBody] LoginDto loginDto)
-        {
-            try
-            {
-                var user = await _unitOfWork.Usuarios.GetByEmailAsync(loginDto.Email);
-
-                if (user == null)
-                {
-                    return NotFound(new { message = "Usuario no encontrado" });
-                }
-
-                // Intentar verificar la contraseña
-                bool passwordValid = false;
-                string errorMessage = null;
-
-                try
-                {
-                    passwordValid = user.Password.Verify(loginDto.Password);
-                }
-                catch (Exception ex)
-                {
-                    errorMessage = ex.Message;
-                }
-
-                return Ok(new
-                {
-                    userId = user.Id,
-                    email = user.Email.ToString(),
-                    passwordProvided = loginDto.Password,
-                    passwordValid,
-                    errorMessage,
-                    passwordType = user.Password?.GetType().Name,
-                    // No incluir información sensible como passwordHash en producción
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = $"Error en la verificación: {ex.Message}" });
-            }
-        }
-
-        /// <summary>
         /// Permite a un administrador restablecer la contraseña de un usuario.
         /// </summary>
         /// <param name="resetDto">Datos para el restablecimiento de contraseña</param>
@@ -348,20 +258,21 @@ namespace DogWalk_API.Controllers
                 {
                     return Unauthorized(new { message = "Clave de seguridad incorrecta" });
                 }
-                
+
                 // Obtener el usuario por ID
                 var usuario = await _unitOfWork.Usuarios.GetByIdAsync(resetDto.UserId);
-                
+
                 if (usuario == null)
                 {
                     return NotFound(new { message = "Usuario no encontrado" });
                 }
-                
+
                 // Actualizar la contraseña
                 await _unitOfWork.Usuarios.UpdatePasswordAsync(resetDto.UserId, resetDto.NewPassword);
-                
-                return Ok(new { 
-                    message = "Contraseña actualizada correctamente", 
+
+                return Ok(new
+                {
+                    message = "Contraseña actualizada correctamente",
                     userId = usuario.Id,
                     email = usuario.Email.ToString()
                 });

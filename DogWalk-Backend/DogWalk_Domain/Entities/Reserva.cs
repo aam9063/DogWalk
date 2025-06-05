@@ -22,7 +22,7 @@ public class Reserva : EntityBase
         public Perro Perro { get; private set; }
         public DisponibilidadHoraria Disponibilidad { get; private set; }
         
-        private Reserva() : base() { } // Para EF Core
+        private Reserva() : base() { } 
         
         public Reserva(
             Guid id,

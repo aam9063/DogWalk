@@ -6,7 +6,7 @@ namespace DogWalk_Domain.Entities;
 public class ItemCarrito : EntityBase
     {
         public Guid UsuarioId { get; private set; }
-        public Guid ArticuloId { get; private set; }  // Cambiado de ItemId a ArticuloId
+        public Guid ArticuloId { get; private set; }  
         public int Cantidad { get; private set; }
         public Dinero PrecioUnitario { get; private set; }
         
@@ -17,7 +17,7 @@ public class ItemCarrito : EntityBase
         public Usuario Usuario { get; private set; }
         public Articulo Articulo { get; private set; }
         
-        private ItemCarrito() : base() { } // Para EF Core
+        private ItemCarrito() : base() { } 
         
         public ItemCarrito(
             Guid id,

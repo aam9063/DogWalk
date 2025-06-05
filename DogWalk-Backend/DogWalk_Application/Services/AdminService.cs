@@ -77,15 +77,12 @@ public class AdminService
     // Obtener datos para el dashboard
     public async Task<DashboardSummaryDto> GetDashboardSummary()
     {
-        // Lógica para obtener estadísticas y datos para el dashboard
-        // ...
         var usuarios = await _unitOfWork.Usuarios.GetAllAsync();
         var paseadores = await _unitOfWork.Paseadores.GetAllAsync();
         var reservas = await _unitOfWork.Reservas.GetAllAsync();
         
         return new DashboardSummaryDto
         {
-            // Poblar con datos reales
             TotalUsuarios = usuarios.Count(),
             TotalPaseadores = paseadores.Count(),
             TotalReservas = reservas.Count(),

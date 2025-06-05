@@ -1,4 +1,3 @@
-// DogWalk_Infrastructure/Authentication/PasswordHasher.cs
 using System.Security.Cryptography;
 using System.Text;
 

@@ -11,7 +11,7 @@ public class ImagenArticulo : EntityBase
         // Relaciones
         public Articulo Articulo { get; private set; }
         
-        private ImagenArticulo() : base() { } // Para EF Core
+        private ImagenArticulo() : base() { } 
         
         public ImagenArticulo(
             Guid id,

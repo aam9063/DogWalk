@@ -8,11 +8,10 @@ public class Role : EntityBase
         public RolUsuario TipoRol { get; private set; }
         public string Nombre { get; private set; }
         
-        // Propiedades de navegación
         public ICollection<Usuario> Usuarios { get; private set; } = new List<Usuario>();
         public ICollection<Paseador> Paseadores { get; private set; } = new List<Paseador>();
         
-        private Role() : base() { } // Para EF Core
+        private Role() : base() { } 
         
         public Role(RolUsuario tipoRol, string nombre) : base()
         {

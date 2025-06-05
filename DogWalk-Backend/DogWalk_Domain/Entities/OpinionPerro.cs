@@ -13,7 +13,7 @@ namespace DogWalk_Domain.Entities;
         public Perro Perro { get; private set; }
         public Paseador Paseador { get; private set; }
         
-        private OpinionPerro() : base() { } // Para EF Core
+        private OpinionPerro() : base() { } 
         
         public OpinionPerro(
             Guid id,

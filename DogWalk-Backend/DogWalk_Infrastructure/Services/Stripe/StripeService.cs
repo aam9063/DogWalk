@@ -67,7 +67,7 @@ public class StripeService
                 {
                     PriceData = new SessionLineItemPriceDataOptions
                     {
-                        Currency = "eur", // o detalle.PrecioUnitario.Moneda.ToLower()
+                        Currency = "eur", 
                         UnitAmount = (long)(detalle.PrecioUnitario.Cantidad * 100),
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
@@ -104,7 +104,6 @@ public class StripeService
         var service = new SessionService();
         var session = await service.GetAsync(sessionId);
         
-        // Verificar si la sesión se ha pagado
         return session.PaymentStatus == "paid";
     }
     

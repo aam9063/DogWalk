@@ -110,7 +110,6 @@ namespace DogWalk_Application.Features.Paseadores.Queries
                 // Calcular precio base
                 var precioBase = precios.Any() ? precios.Min(p => p.Valor.Cantidad) : 0;
                 
-                // Generar etiquetas
                 var etiquetas = new List<string>();
                 if (paseador.ValoracionGeneral >= 4.5m)
                     etiquetas.Add("Excelente valoración");

@@ -79,8 +79,6 @@ namespace DogWalk_Infrastructure.Authentication
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        // En DogWalk_Infrastructure/Authentication/JwtProvider.cs
-        // Añade este método
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
             var tokenValidationParameters = new TokenValidationParameters
@@ -89,7 +87,7 @@ namespace DogWalk_Infrastructure.Authentication
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"])),
                 ValidateIssuer = false,
                 ValidateAudience = false,
-                ValidateLifetime = false // No validamos tiempo de vida
+                ValidateLifetime = false 
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -98,7 +96,7 @@ namespace DogWalk_Infrastructure.Authentication
             if (!(securityToken is JwtSecurityToken jwtSecurityToken) ||
                 !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
             {
-                throw new SecurityTokenException("Token inválido");
+                throw new SecurityTokenException("Token invÃ¡lido");
             }
 
             return principal;

@@ -109,11 +109,9 @@ namespace DogWalk_API.Controllers
                     return NotFound(new { message = "Usuario no encontrado" });
                 }
 
-                // Obtener perros y reservas
                 var perros = await _unitOfWork.Perros.GetByUsuarioIdAsync(userId);
                 var reservas = await _unitOfWork.Reservas.GetByUsuarioIdAsync(userId);
 
-                // Crear DTO de perfil
                 var profileDto = new UsuarioProfileDto
                 {
                     Id = usuario.Id,
@@ -175,11 +173,9 @@ namespace DogWalk_API.Controllers
 
                 await _unitOfWork.SaveChangesAsync();
 
-                // Obtener datos actualizados incluyendo los perros
                 var perros = await _unitOfWork.Perros.GetByUsuarioIdAsync(userId);
                 var reservas = await _unitOfWork.Reservas.GetByUsuarioIdAsync(userId);
 
-                // Devolver el perfil actualizado con todos los datos
                 var updatedProfile = new UsuarioProfileDto
                 {
                     Id = usuario.Id,
@@ -277,7 +273,6 @@ namespace DogWalk_API.Controllers
             {
                 var usuarioId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
 
-                // Obtener datos necesarios
                 var reservas = (await _unitOfWork.Reservas.GetByUsuarioIdAsync(usuarioId))?.ToList() ?? new List<Reserva>();
                 var perros = (await _unitOfWork.Perros.GetByUsuarioIdAsync(usuarioId))?.ToList() ?? new List<Perro>();
                 var facturas = (await _unitOfWork.Facturas.GetByUsuarioIdAsync(usuarioId))?.ToList() ?? new List<Factura>();
@@ -292,7 +287,6 @@ namespace DogWalk_API.Controllers
                     ReservasPendientes = reservas.Count(r => r.Estado == EstadoReserva.Pendiente),
                     ReservasCompletadas = reservas.Count(r => r.Estado == EstadoReserva.Completada),
 
-                    // Servicios más usados con validación null
                     ServiciosMasUsados = reservas
                         .Where(r => r.Servicio != null && !string.IsNullOrEmpty(r.Servicio.Nombre))
                         .GroupBy(r => r.Servicio.Nombre)
@@ -300,7 +294,6 @@ namespace DogWalk_API.Controllers
                         .OrderByDescending(x => x.Value)
                         .ToList(),
 
-                    // Paseadores favoritos con validación null
                     PaseadoresFavoritos = reservas
                         .Where(r => r.Paseador != null && !string.IsNullOrEmpty(r.Paseador.Nombre))
                         .GroupBy(r => r.Paseador.Nombre ?? "Desconocido")
@@ -309,7 +302,6 @@ namespace DogWalk_API.Controllers
                         .ToList()
                 };
 
-                // Obtener historial de compras con validación null
                 var historialCompras = facturas
                     .Where(f => f != null)
                     .Select(f => new HistorialCompraDto

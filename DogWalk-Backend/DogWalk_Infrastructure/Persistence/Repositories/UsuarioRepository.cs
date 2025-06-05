@@ -20,7 +20,6 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
 
         public async Task<Usuario> GetByEmailAsync(string email)
         {
-            // Traer todos los usuarios (no eficiente pero funcionará para testing)
             var usuarios = await _context.Usuarios.ToListAsync();
             return usuarios.FirstOrDefault(u => u.Email.ToString() == email);
         }
@@ -60,7 +59,6 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
         public async Task<Guid> CreateAdminUserAsync(string email, string nombre, string apellido,
                                                   string telefono, string password)
         {
-            // Crear el objeto Password usando la lógica de dominio
             var passwordObj = DogWalk_Domain.Common.ValueObjects.Password.Create(password);
             
             var adminId = Guid.NewGuid();
@@ -96,10 +94,8 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
 
         public async Task UpdatePasswordAsync(Guid userId, string newPassword)
         {
-            // Crear un nuevo objeto Password con el método del dominio
             var passwordObj = DogWalk_Domain.Common.ValueObjects.Password.Create(newPassword);
             
-            // Actualizar directamente en la base de datos
             string sql = @"
                 UPDATE Usuarios
                 SET PasswordHash = @PasswordHash, 

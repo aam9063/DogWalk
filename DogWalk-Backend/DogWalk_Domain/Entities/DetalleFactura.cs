@@ -6,7 +6,7 @@ namespace DogWalk_Domain.Entities;
 public class DetalleFactura : EntityBase
 {
     public Guid FacturaId { get; private set; }
-    public Guid ArticuloId { get; private set; }  // Ahora solo manejamos artículos
+    public Guid ArticuloId { get; private set; }  
     public int Cantidad { get; private set; }
     public Dinero PrecioUnitario { get; private set; }
     
@@ -17,7 +17,7 @@ public class DetalleFactura : EntityBase
     public Factura Factura { get; private set; }
     public Articulo Articulo { get; private set; }
     
-    private DetalleFactura() : base() { } // Para EF Core
+    private DetalleFactura() : base() { } 
     
     public DetalleFactura(
         Guid id,

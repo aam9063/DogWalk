@@ -120,9 +120,6 @@ namespace DogWalk_API.Controllers
                             var factura = await unitOfWork.Facturas.GetByIdAsync(facturaId);
                             if (factura != null)
                             {
-                                // Añade un método a tu entidad Factura para marcarla como pagada
-                                // Por ejemplo:
-                                // factura.MarcarComoPagada();
                                 
                                 await unitOfWork.SaveChangesAsync();
                                 logger.LogInformation($"Factura {facturaId} marcada como pagada exitosamente");

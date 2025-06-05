@@ -53,7 +53,6 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
             await Task.CompletedTask;
         }
 
-        // Implementación de métodos de paginación
 
         public virtual async Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize)
         {

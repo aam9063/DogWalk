@@ -12,7 +12,7 @@ public class Precio : EntityBase
         public Paseador Paseador { get; private set; }
         public Servicio Servicio { get; private set; }
         
-        private Precio() : base() { } // Para EF Core
+        private Precio() : base() { } 
         
         public Precio(
             Guid id,

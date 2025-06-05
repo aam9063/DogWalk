@@ -37,7 +37,7 @@ public class Paseador : EntityBase
     private readonly List<ChatMensaje> _mensajesRecibidos = new();
     public IReadOnlyCollection<ChatMensaje> MensajesRecibidos => _mensajesRecibidos.AsReadOnly();
 
-    private Paseador() : base() { } // Para EF Core
+    private Paseador() : base() { } 
 
     public Paseador(
         Guid id,

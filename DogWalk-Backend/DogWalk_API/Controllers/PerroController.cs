@@ -484,15 +484,6 @@ namespace DogWalk_API.Controllers
                 // Eliminar archivo físico (opcional)
                 EliminarArchivoFoto(foto.UrlFoto);
                 
-                // Necesitamos un método para eliminar la foto del perro
-                // Como no tenemos acceso directo al repositorio de fotos, tendremos que eliminar la foto de la colección
-                // Esto dependerá de cómo esté implementada tu entidad perro
-                
-                // Si tu entidad tiene un método para eliminar fotos, úsalo así:
-                // perroOwner.EliminarFoto(foto);
-                
-                // Si no tiene un método específico, tendrás que implementar esta lógica
-                // o asegurarte de que cuando se elimina la foto de la colección, EF Core la elimine de la base de datos
                 
                 await _unitOfWork.SaveChangesAsync();
                 
@@ -530,7 +521,6 @@ namespace DogWalk_API.Controllers
                 await foto.CopyToAsync(stream);
             }
             
-            // Retorna la URL relativa o absoluta dependiendo de tu configuración
             return $"/uploads/perros/{fileName}";
         }
         
@@ -556,7 +546,6 @@ namespace DogWalk_API.Controllers
             }
             catch
             {
-                // Ignorar errores al eliminar el archivo físico
             }
         }
     }

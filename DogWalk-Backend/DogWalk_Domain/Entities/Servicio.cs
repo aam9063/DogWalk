@@ -10,14 +10,13 @@ public class Servicio : EntityBase
         public string Descripcion { get; private set; }
         public TipoServicio Tipo { get; private set; }
         
-        // Relaciones
         private readonly List<Precio> _precios = new();
         public IReadOnlyCollection<Precio> Precios => _precios.AsReadOnly();
         
         private readonly List<Reserva> _reservas = new();
         public IReadOnlyCollection<Reserva> Reservas => _reservas.AsReadOnly();
         
-        private Servicio() : base() { } // Para EF Core
+        private Servicio() : base() { } 
         
         public Servicio(
             Guid id,

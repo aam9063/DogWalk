@@ -12,7 +12,7 @@ namespace DogWalk_Domain.Entities;
         // Relaciones
         public Paseador Paseador { get; private set; }
         
-        private DisponibilidadHoraria() : base() { } // Para EF Core
+        private DisponibilidadHoraria() : base() { } 
         
         public DisponibilidadHoraria(
             Guid id,

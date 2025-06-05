@@ -17,7 +17,7 @@ public class Articulo : EntityBase
         private readonly List<ImagenArticulo> _imagenes = new();
         public IReadOnlyCollection<ImagenArticulo> Imagenes => _imagenes.AsReadOnly();
         
-        private Articulo() : base() { } // Para EF Core
+        private Articulo() : base() { } 
         
         public Articulo(
             Guid id,

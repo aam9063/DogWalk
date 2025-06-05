@@ -14,10 +14,9 @@ namespace DogWalk_Domain.Entities
         public string CreatedByIp { get; private set; }
         public string UserAgent { get; private set; }
 
-        // Propiedades de relación
         public virtual Usuario Usuario { get; private set; }
 
-        private RefreshToken() : base() { } // Para EF Core
+        private RefreshToken() : base() { } 
 
         public RefreshToken(
             Guid id,

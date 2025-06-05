@@ -32,10 +32,8 @@ namespace DogWalk_Infrastructure.Persistence.Context
         {
             base.OnModelCreating(modelBuilder);
             
-            // Aplicar todas las configuraciones de entidades en el assembly
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             
-            // Configuraciones directas si son necesarias
             modelBuilder.Entity<Usuario>().ToTable("Usuarios");
             modelBuilder.Entity<Paseador>().ToTable("Paseadores");
             modelBuilder.Entity<Perro>().ToTable("Perros");
@@ -69,7 +67,6 @@ namespace DogWalk_Infrastructure.Persistence.Context
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Datos semilla
             SeedData(modelBuilder);
         }
         

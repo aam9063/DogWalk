@@ -11,7 +11,7 @@ public class FotoPerro : EntityBase
         // Relaciones
         public Perro Perro { get; private set; }
         
-        private FotoPerro() : base() { } // Para EF Core
+        private FotoPerro() : base() { } 
         
         public FotoPerro(
             Guid id,

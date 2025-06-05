@@ -98,7 +98,7 @@ namespace DogWalk_API.Controllers
                     email,
                     password,
                     telefono,
-                    RolUsuario.Paseador  // Rol debe ser el último parámetro
+                    RolUsuario.Paseador  
                 );
 
                 // Crear paseador con todos los parámetros requeridos
@@ -259,7 +259,6 @@ namespace DogWalk_API.Controllers
                 var valoraciones = await _unitOfWork.RankingPaseadores.GetByPaseadorIdAsync(id);
                 int cantidadValoraciones = valoraciones.Count();
 
-                // Crear el DTO con la información pública del paseador
                 var result = new
                 {
                     Id = paseador.Id,
@@ -329,10 +328,7 @@ namespace DogWalk_API.Controllers
                 // Obtener valoraciones
                 var valoraciones = await _unitOfWork.RankingPaseadores.GetByPaseadorIdAsync(id);
 
-                // Reservas (nota: adaptado al modelo que te falta)
-                // Esto implementa una versión simplificada
 
-                // Crear DTO con los detalles usando tu PaseadorDetailsDto existente
                 var paseadorDto = new PaseadorDetailsDto
                 {
                     Id = paseador.Id,
@@ -360,13 +356,10 @@ namespace DogWalk_API.Controllers
                         NombreUsuario = $"{v.Usuario.Nombre} {v.Usuario.Apellido}",
                         FotoUsuario = v.Usuario.FotoPerfil,
                         Puntuacion = v.Valoracion.Puntuacion,
-                        // Nota: Valoracion parece no tener un campo Comentario en tu modelo, 
-                        // agregándolo vacío para que compile
                         Comentario = "",
                         Fecha = v.CreadoEn
                     }).ToList(),
 
-                    // Implementación simplificada para ReservasProximas
                     ReservasProximas = new List<ReservaDto>()
                 };
 
@@ -483,7 +476,6 @@ namespace DogWalk_API.Controllers
                             Dinero.Create(precioDto.Precio)
                         );
 
-                        // Asegúrate de que este método exista o implementa la lógica adecuada aquí
                         paseador.AgregarPrecio(nuevoPrecio);
                     }
                 }

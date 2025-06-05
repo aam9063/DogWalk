@@ -22,12 +22,10 @@ public sealed record Direccion
             if (string.IsNullOrWhiteSpace(textoCompleto))
                 throw new ArgumentException("La dirección no puede estar vacía", nameof(textoCompleto));
             
-            // Simplificamos - en un escenario real se podría parsear la dirección
-            // para extraer calle, ciudad y código postal
             return new Direccion(
-                textoCompleto, // Simplificado, no extraemos la calle
-                string.Empty,  // Simplificado, no extraemos la ciudad
-                string.Empty,  // Simplificado, no extraemos el código postal
+                textoCompleto, 
+                string.Empty,  
+                string.Empty,  
                 textoCompleto
             );
         }

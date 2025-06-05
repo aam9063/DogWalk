@@ -15,8 +15,7 @@ namespace DogWalk_Domain.Entities;
         public Usuario Usuario { get; private set; }
         public Paseador Paseador { get; private set; }
         
-        private ChatMensaje() : base() { } // Para EF Core
-        
+        private ChatMensaje() : base() { } 
         public ChatMensaje(
             Guid id,
             Guid usuarioId,

@@ -32,14 +32,9 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
         
         public async Task<IEnumerable<Paseador>> GetByDistanciaAsync(double latitud, double longitud, double distanciaMaximaKm)
         {
-            // Simplificado para SQL Server - podría optimizarse con funciones geoespaciales
-            // Fórmula de distancia haversine simplificada
-            // Esta consulta no es óptima para distancias largas o cerca de los polos pero funciona
-            // para distancias moderadas en áreas urbanas
             
             var paseadores = await _context.Paseadores.ToListAsync();
             
-            // Filtrado en memoria - en un escenario real usaríamos una función SQL optimizada
             return paseadores.Where(p => 
             {
                 double latP = p.Ubicacion.Latitud;
@@ -141,7 +136,7 @@ namespace DogWalk_Infrastructure.Persistence.Repositories
         
         // Aplicar paginación
         var paseadores = await query
-            .OrderBy(p => p.Apellido) // Puedes cambiar el ordenamiento según necesites
+            .OrderBy(p => p.Apellido) 
             .Skip((numeroPagina - 1) * elementosPorPagina)
             .Take(elementosPorPagina)
             .ToListAsync();

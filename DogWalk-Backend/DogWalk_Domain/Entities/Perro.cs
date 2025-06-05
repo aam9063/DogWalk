@@ -22,8 +22,7 @@ namespace DogWalk_Domain.Entities;
         private readonly List<Reserva> _reservas = new();
         public IReadOnlyCollection<Reserva> Reservas => _reservas.AsReadOnly();
         
-        private Perro() : base() { } // Para EF Core
-        
+        private Perro() : base() { } 
         public Perro(
             Guid id,
             Guid usuarioId,

@@ -46,7 +46,7 @@ public class ArticuloRepository : GenericRepository<Articulo>, IArticuloReposito
         if (articulo == null || articulo.Stock < cantidad)
             return false;
             
-        articulo.ActualizarStock(-cantidad); // Reducir stock
+        articulo.ActualizarStock(-cantidad); 
         return true;
     }
 
@@ -74,10 +74,8 @@ public class ArticuloRepository : GenericRepository<Articulo>, IArticuloReposito
         int pageNumber = 1, 
         int pageSize = 10)
     {
-        // Usar AsNoTracking para mejorar el rendimiento
         var query = _dbSet.AsNoTracking();
         
-        // Aplicar el predicado
         if (predicate != null)
             query = query.Where(predicate);
         

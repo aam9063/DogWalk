@@ -31,7 +31,6 @@ namespace DogWalk_Infrastructure.Services.FileStorage
                 Directory.CreateDirectory(directory);
             }
             
-            // Generar nombre único para evitar colisiones
             string fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             string filePath = Path.Combine(directory, fileName);
             

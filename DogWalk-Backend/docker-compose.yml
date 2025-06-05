@@ -11,24 +11,22 @@ services:
     depends_on:
       - sqlserver
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=DogWalk;User Id=sa;Password=2ZE868Fru;TrustServerCertificate=True
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=DogWalk;User Id=sa;Password=${SQL_PASSWORD};TrustServerCertificate=True
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=2ZE868Fru
+      - SA_PASSWORD=${SQL_PASSWORD}
       - MSSQL_PID=Express
     volumes:
       - ./.containers/sqlserver:/var/opt/mssql/data
     ports:
       - 1433:1433
     healthcheck:
-      test: ["CMD", "sqlcmd", "-S", "localhost", "-U", "sa", "-P", "2ZE868Fru", "-Q", "SELECT 1"]
+      test: ["CMD", "sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SQL_PASSWORD}", "-Q", "SELECT 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-      
-

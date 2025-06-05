@@ -13,12 +13,12 @@ namespace Application_IntegrationTests.Infrastructure;
 
 public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
-        .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-        .WithName("DogWalk")
-        .WithPassword("2ZE868Fru")
-        .WithPortBinding(1433)
-        .Build();
+   private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
+    .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+    .WithName("DogWalk")
+    .WithPassword(Environment.GetEnvironmentVariable("TEST_SQL_PASSWORD"))
+    .WithPortBinding(1433)
+    .Build();
 
     // Inicializa la base de datos
     public async Task InitializeAsync()

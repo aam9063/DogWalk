@@ -16,10 +16,10 @@ namespace Api_FunctionalTests.Infrastructure;
 public class FunctionalTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
 
-     private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
+    private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
         .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
         .WithName("DogWalk")
-        .WithPassword("2ZE868Fru")
+        .WithPassword(Environment.GetEnvironmentVariable("TEST_SQL_PASSWORD"))
         .WithPortBinding(1433)
         .Build();
 
@@ -45,16 +45,18 @@ public class FunctionalTestWebAppFactory : WebApplicationFactory<Program>, IAsyn
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureTestServices(services => {
+        builder.ConfigureTestServices(services =>
+        {
             services.RemoveAll(typeof(DbContextOptions<DogWalkDbContext>));
-            
+
             // Modificar la cadena de conexión para incluir el nombre de la base de datos
             var connectionString = $"{_dbContainer.GetConnectionString()};Database=DogWalk_Tests";
-            
-            services.AddDbContext<DogWalkDbContext>(options => {
+
+            services.AddDbContext<DogWalkDbContext>(options =>
+            {
                 options.UseSqlServer(connectionString);
                 // Ignorar la advertencia de cambios pendientes en el modelo
-                options.ConfigureWarnings(warnings => 
+                options.ConfigureWarnings(warnings =>
                     warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
             });
 

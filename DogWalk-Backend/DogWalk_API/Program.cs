@@ -90,7 +90,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSignalR", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // URL del frontend
+        policy.WithOrigins("https://dogwalkapp.netlify.app", 
+               "http://localhost:5173") // URL del frontend
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials(); // SignalR
@@ -170,6 +171,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DogWalk API v1"));
 }
+
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DogWalk API v1"));
+
 
 // Inicializar datos
 using (var scope = app.Services.CreateScope())
